@@ -135,8 +135,6 @@ export default function TodayTab({ onWorkoutPress, onNutritionPress }: Props) {
           <MealCard
             key={meal.id}
             meal={meal}
-            compact={true}
-            showNotes={false}
             onDeleted={loadTodayData}
             onEdited={loadTodayData}
           />

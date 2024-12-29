@@ -162,9 +162,6 @@ export default function HistoryTab({ workouts, exercises, historyView, setHistor
           <MealCard
             key={meal.id}
             meal={meal}
-            showImage={true}
-            showMacros={true}
-            showNotes={true}
             onDeleted={() => loadDayData(selectedDate)}
             onEdited={() => loadDayData(selectedDate)}
           />

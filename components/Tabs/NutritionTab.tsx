@@ -71,9 +71,6 @@ export default function NutritionTab() {
   const renderMeal = ({ item }: { item: MealEntry }) => (
     <MealCard
       meal={item}
-      showImage={true}
-      showMacros={true}
-      showNotes={true}
       onDeleted={loadMeals}
       onEdited={loadMeals}
     />

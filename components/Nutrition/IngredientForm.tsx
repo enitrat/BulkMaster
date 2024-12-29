@@ -76,7 +76,7 @@ export default function IngredientForm({ visible, onClose, onSave, initialIngred
     margin: 20,
     borderRadius: theme.roundness,
     maxWidth: 500,
-    width: '100%',
+    width: '100%' as const,
     alignSelf: 'center' as const,
   };
 
