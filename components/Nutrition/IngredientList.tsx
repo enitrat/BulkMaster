@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Ingredient, Macros } from '../types';
+import { Ingredient, Macros } from '../../types/index';
 
 interface Props {
   ingredients: Ingredient[];

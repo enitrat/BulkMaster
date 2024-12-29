@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
-import { Exercise, Workout } from '../types/index';
-import ExerciseHistory from './Workout/ExerciseHistory';
+import { Exercise, Workout } from '../../types/index';
+import ExerciseHistory from './ExerciseHistory';
 
 type ExerciseHistoryListProps = {
   exercises: Exercise[];

@@ -1,10 +1,11 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Alert } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { MealEntry, Macros } from '../types';
-import { workoutService } from '../services/workoutService';
-import { nutritionService } from '../services/nutritionService';
-import { calculateMealMacros } from '../utils/nutritionUtils';
+import { MealEntry, Macros } from '@/types/index';
+import { workoutService } from '@/services/workoutService';
+import { nutritionService } from '@/services/nutritionService';
+import { calculateMealMacros } from '@/utils/nutritionUtils';
+import MealCard from '@/components/Nutrition/MealCard';
 
 interface Props {
   onWorkoutPress?: () => void;
@@ -40,6 +41,29 @@ export default function TodayTab({ onWorkoutPress, onNutritionPress }: Props) {
       fat: (total.fat || 0) + (mealMacros.fat || 0),
     };
   }, {} as Macros);
+
+  const handleDeleteMeal = async (id: string) => {
+    Alert.alert(
+      'Delete Meal',
+      'Are you sure you want to delete this meal?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await nutritionService.deleteMealEntry(id);
+              loadTodayData();
+            } catch (error) {
+              console.error('Error deleting meal:', error);
+              Alert.alert('Error', 'Failed to delete meal');
+            }
+          },
+        },
+      ]
+    );
+  };
 
   const renderMacroSummary = () => {
     if (!totalMacros.calories && !totalMacros.protein && !totalMacros.carbs && !totalMacros.fat) {
@@ -111,17 +135,14 @@ export default function TodayTab({ onWorkoutPress, onNutritionPress }: Props) {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Today's Meals</Text>
         {todayMeals.map(meal => (
-          <View key={meal.id} style={styles.mealCard}>
-            <Text style={styles.mealTitle}>{meal.name}</Text>
-            <View style={styles.ingredientsList}>
-              {meal.ingredients.map((ing, index) => (
-                <View key={`${ing.name}-${index}`} style={styles.ingredientItem}>
-                  <Text style={styles.ingredientName}>{ing.name}</Text>
-                  <Text style={styles.ingredientWeight}>{ing.weight}g</Text>
-                </View>
-              ))}
-            </View>
-          </View>
+          <MealCard
+            key={meal.id}
+            meal={meal}
+            compact={true}
+            showNotes={false}
+            onDeleted={loadTodayData}
+            onEdited={loadTodayData}
+          />
         ))}
       </View>
     );
@@ -246,5 +267,36 @@ const styles = StyleSheet.create({
     color: '#666',
     fontSize: 16,
     marginTop: 24,
+  },
+  mealHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  mealInfo: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  mealThumbnail: {
+    width: 60,
+    height: 60,
+    borderRadius: 8,
+    marginLeft: 12,
+  },
+  imageContainer: {
+    width: '100%',
+    height: 200,
+    marginBottom: 12,
+    borderRadius: 8,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+  },
+  mealImage: {
+    width: '100%',
+    height: '100%',
   },
 });

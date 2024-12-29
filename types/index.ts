@@ -64,6 +64,7 @@ export interface MealEntry {
   date: Date;
   ingredients: Ingredient[];
   notes?: string;
+  imageUri?: string;
 }
 
 export type HistoryView = 'calendar' | 'exercises' | 'nutrition';

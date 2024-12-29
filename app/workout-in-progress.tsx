@@ -18,7 +18,7 @@ import { Workout, WorkoutExercise, ExerciseSet, Exercise } from '../types/index'
 import { workoutService } from '../services/workoutService';
 import { templateService } from '../services/templateService';
 import { exerciseService } from '../services/exerciseService';
-import RestTimer from '../components/RestTimer';
+import RestTimer from '@/components/Workout/RestTimer';
 import { useFocusEffect } from '@react-navigation/native';
 
 type SetModalProps = {

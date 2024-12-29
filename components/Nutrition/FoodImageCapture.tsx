@@ -11,11 +11,12 @@ import {
   TextInput,
   ScrollView,
   Modal,
+  Platform,
 } from 'react-native';
 import { Camera, CameraType, CameraView } from 'expo-camera';
 import { Ionicons } from '@expo/vector-icons';
-import { imageAnalysisService } from '../services/imageAnalysisService';
-import { Ingredient, MealEntry } from '../types';
+import { imageAnalysisService } from '@/services/imageAnalysisService';
+import { Ingredient, MealEntry } from '@/types/index';
 
 interface Props {
   visible: boolean;
@@ -49,7 +50,7 @@ const ReviewScreen: React.FC<ReviewScreenProps> = ({
     try {
       const currentAnalysisJson = JSON.stringify({
         name: analysis.name,
-        ingredients: analysis.ingredients.map(ing => ({
+        ingredients: analysis.ingredients.map((ing: Ingredient) => ({
           name: ing.name,
           weight: ing.weight,
           macros: ing.macros
@@ -108,7 +109,7 @@ const ReviewScreen: React.FC<ReviewScreenProps> = ({
             <Text style={styles.sectionTitle}>Analysis Results</Text>
             <View style={styles.mealCard}>
               <Text style={styles.mealName}>{analysis.name}</Text>
-              {analysis.ingredients.map((ingredient, index) => (
+              {analysis.ingredients.map((ingredient: Ingredient, index: number) => (
                 <View key={index} style={styles.ingredientItem}>
                   <View style={styles.ingredientMain}>
                     <Text style={styles.ingredientName}>{ingredient.name}</Text>
@@ -179,6 +180,8 @@ export default function FoodImageCapture({ visible, onAnalysisComplete, onClose 
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [currentAnalysis, setCurrentAnalysis] = useState<MealEntry | null>(null);
   const [showReview, setShowReview] = useState(false);
+  const [facing, setFacing] = useState<CameraType>('back');
+  const [zoom, setZoom] = useState(0.3);
 
   useEffect(() => {
     (async () => {
@@ -219,7 +222,8 @@ export default function FoodImageCapture({ visible, onAnalysisComplete, onClose 
         name: analyzedMeal.name,
         date: new Date(),
         ingredients: analyzedMeal.ingredients,
-        notes: ''
+        notes: '',
+        imageUri: imageUri
       };
       setCurrentAnalysis(mealEntry);
       setShowReview(true);
@@ -233,6 +237,17 @@ export default function FoodImageCapture({ visible, onAnalysisComplete, onClose 
     } finally {
       setIsAnalyzing(false);
     }
+  };
+
+  // Zoom handlers with platform-specific increments
+  const handleZoomIn = () => {
+    const increment = Platform.OS === 'ios' ? 0.001 : 0.1;
+    setZoom(Math.min(1, zoom + increment));
+  };
+
+  const handleZoomOut = () => {
+    const increment = Platform.OS === 'ios' ? 0.001 : 0.1;
+    setZoom(Math.max(0, zoom - increment));
   };
 
   if (!hasPermission) {
@@ -273,7 +288,27 @@ export default function FoodImageCapture({ visible, onAnalysisComplete, onClose 
               <CameraView
                 ref={cameraRef}
                 style={styles.camera}
-              />
+                facing={facing}
+                zoom={zoom}
+              >
+                <View style={styles.controlsContainer}>
+                  <View style={styles.zoomContainer}>
+                    <TouchableOpacity
+                      style={styles.zoomButton}
+                      onPress={handleZoomOut}
+                    >
+                      <Text style={styles.zoomButtonText}>-</Text>
+                    </TouchableOpacity>
+                    <Text style={styles.zoomText}>{(zoom * 100).toFixed(1)}%</Text>
+                    <TouchableOpacity
+                      style={styles.zoomButton}
+                      onPress={handleZoomIn}
+                    >
+                      <Text style={styles.zoomButtonText}>+</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </CameraView>
             )}
           </View>
 
@@ -497,5 +532,40 @@ const styles = StyleSheet.create({
   acceptButtonText: {
     color: '#fff',
     fontWeight: '600',
+  },
+  controlsContainer: {
+    position: 'absolute',
+    bottom: 40,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 20,
+  },
+  zoomContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderRadius: 20,
+    padding: 10,
+  },
+  zoomButton: {
+    backgroundColor: 'white',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginHorizontal: 10,
+  },
+  zoomButtonText: {
+    fontSize: 24,
+    color: 'black',
+  },
+  zoomText: {
+    color: 'white',
+    fontSize: 16,
+    marginHorizontal: 10,
+    minWidth: 60,
+    textAlign: 'center',
   },
 });

@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import { Ingredient, Macros } from '../types';
+import { Ingredient, Macros } from '../types/index';
 import * as FileSystem from 'expo-file-system';
 
 // You'll need to set your OpenAI API key in your environment variables or config
@@ -7,7 +7,7 @@ const openai = new OpenAI({
   apiKey: process.env.EXPO_PUBLIC_OPENAI_API_KEY // Make sure to add this to your environment variables
 });
 
-interface AnalyzedMeal {
+export interface AnalyzedMeal {
   name: string;
   ingredients: AnalyzedIngredient[];
 }
@@ -43,7 +43,7 @@ export const imageAnalysisService = {
       }`;
 
       const response = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
+        model: "gpt-4o",
         messages: [
           {
             role: "system",
@@ -74,7 +74,7 @@ export const imageAnalysisService = {
       // Extract the JSON object from the response
       const jsonMatch = content.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
-        throw new Error('No valid JSON found in response');
+        throw new Error(`${content}`);
       }
 
       const analyzedMeal: AnalyzedMeal = JSON.parse(jsonMatch[0]);
@@ -113,7 +113,7 @@ export const imageAnalysisService = {
       }`;
 
       const response = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
+        model: "gpt-4o",
         messages: [
           {
             role: "system",

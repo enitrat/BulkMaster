@@ -5,10 +5,10 @@ import { WorkoutTemplate, Workout, Exercise, HistoryView } from '../types/index'
 import { templateService } from '../services/templateService';
 import { exerciseService } from '../services/exerciseService';
 import { workoutService } from '../services/workoutService';
-import TodayTab from '../components/TodayTab';
-import WorkoutsTab from '../components/WorkoutsTab';
-import NutritionTab from '../components/NutritionTab';
-import HistoryTab from '../components/HistoryTab';
+import TodayTab from '../components/Tabs/TodayTab';
+import WorkoutsTab from '../components/Tabs/WorkoutsTab';
+import NutritionTab from '../components/Tabs/NutritionTab';
+import HistoryTab from '../components/Tabs/HistoryTab';
 import TabBar from '../components/TabBar';
 
 type MainTab = 'today' | 'workouts' | 'nutrition' | 'history';
@@ -97,7 +97,7 @@ export default function HomeScreen() {
 
       <TabBar
         activeTab={activeTab}
-        onTabPress={setActiveTab}
+        onTabPress={(tabId: string) => setActiveTab(tabId as MainTab)}
         tabs={[
           { id: 'today', icon: 'today', label: 'Today' },
           { id: 'workouts', icon: 'barbell', label: 'Workouts' },

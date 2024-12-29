@@ -8,10 +8,10 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { MealEntry, Ingredient, Macros } from '../types/index';
-import { nutritionService } from '../services/nutritionService';
+import { MealEntry, Ingredient, Macros } from '../../types/index';
+import { nutritionService } from '../../services/nutritionService';
 import { useFocusEffect } from '@react-navigation/native';
-import AddMealModal from './AddMealModal';
+import AddMealModal from '../Nutrition/AddMealModal';
 
 const calculateMealMacros = (ingredients: Ingredient[]): Macros => {
   return ingredients.reduce((total, ing) => {

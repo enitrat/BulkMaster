@@ -10,9 +10,9 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { MealEntry, Ingredient } from '../types/index';
-import FoodImageCapture from './FoodImageCapture';
-import IngredientList from './IngredientList';
+import { MealEntry, Ingredient } from '@/types/index';
+import FoodImageCapture from '@/components/Nutrition/FoodImageCapture';
+import IngredientList from '@/components/Nutrition/IngredientList';
 
 interface Props {
   visible: boolean;
@@ -173,6 +173,7 @@ export default function AddMealModal({ visible, onClose, onSave, initialMeal }: 
           <FoodImageCapture
             onAnalysisComplete={handleAnalysisComplete}
             onClose={() => setShowCamera(false)}
+            visible={showCamera}
           />
         )}
 

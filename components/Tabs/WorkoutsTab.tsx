@@ -2,9 +2,9 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, Alert } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { WorkoutTemplate, Workout } from '../types';
-import { templateService } from '../services/templateService';
-import { workoutService } from '../services/workoutService';
+import { WorkoutTemplate, Workout } from '@/types/index';
+import { templateService } from '@/services/templateService';
+import { workoutService } from '@/services/workoutService';
 
 interface Props {
   templates: WorkoutTemplate[];

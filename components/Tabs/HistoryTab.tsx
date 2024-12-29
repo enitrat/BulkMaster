@@ -2,9 +2,9 @@ import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import { Ionicons } from '@expo/vector-icons';
-import { Workout, Exercise, MealEntry, HistoryView, Macros, Ingredient, WorkoutExercise, ExerciseSet } from '../types/index';
-import { nutritionService } from '../services/nutritionService';
-import ExerciseHistoryList from './ExerciseHistoryList';
+import { Workout, Exercise, MealEntry, HistoryView, Macros, Ingredient, WorkoutExercise, ExerciseSet } from '../../types/index';
+import { nutritionService } from '../../services/nutritionService';
+import ExerciseHistoryList from '../Workout/ExerciseHistoryList';
 import { workoutService } from '@/services/workoutService';
 
 interface Props {

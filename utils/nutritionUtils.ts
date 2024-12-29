@@ -1,4 +1,4 @@
-import { Ingredient, Macros } from '../types';
+import { Ingredient, Macros } from '../types/index';
 
 export const calculateMealMacros = (ingredients: Ingredient[]): Macros => {
   return ingredients.reduce((total: Macros, ing: Ingredient) => {

@@ -10,13 +10,13 @@ import {
   ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { MealEntry, Ingredient } from '../types';
-import { imageAnalysisService } from '../services/imageAnalysisService';
+import { Ingredient } from '@/types/index';
+import { AnalyzedMeal, imageAnalysisService } from '@/services/imageAnalysisService';
 
 interface Props {
   imageUri: string;
-  initialAnalysis: MealEntry;
-  onAccept: (meal: MealEntry) => void;
+  initialAnalysis: AnalyzedMeal;
+  onAccept: (meal: AnalyzedMeal) => void;
   onClose: () => void;
 }
 
@@ -26,7 +26,7 @@ export default function FoodAnalysisReview({
   onAccept,
   onClose,
 }: Props) {
-  const [analysis, setAnalysis] = useState<MealEntry>(initialAnalysis);
+  const [analysis, setAnalysis] = useState<AnalyzedMeal>(initialAnalysis);
   const [feedback, setFeedback] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
@@ -73,7 +73,7 @@ export default function FoodAnalysisReview({
           <Text style={styles.sectionTitle}>Analysis Results</Text>
           <View style={styles.mealCard}>
             <Text style={styles.mealName}>{analysis.name}</Text>
-            {analysis.ingredients.map((ingredient, index) => (
+            {analysis.ingredients.map((ingredient: Ingredient, index: number) => (
               <View key={index} style={styles.ingredientItem}>
                 <Text style={styles.ingredientName}>{ingredient.name}</Text>
                 <Text style={styles.ingredientWeight}>{ingredient.weight}g</Text>

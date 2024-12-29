@@ -14,7 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Exercise, ExerciseCategory } from '../types/index';
 import { exerciseService } from '../services/exerciseService';
 import { templateService } from '../services/templateService';
-import AddExerciseModal from '../components/AddExerciseModal';
+import AddExerciseModal from '../components/Workout/AddExerciseModal';
 import { useFocusEffect } from '@react-navigation/native';
 
 export default function NewTemplateScreen() {
