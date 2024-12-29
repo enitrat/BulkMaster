@@ -6,6 +6,7 @@ import { workoutService } from '@/services/workoutService';
 import { nutritionService } from '@/services/nutritionService';
 import { calculateMealMacros } from '@/utils/nutritionUtils';
 import MealCard from '@/components/Nutrition/MealCard';
+import WorkoutCard from '@/components/Workout/WorkoutCard';
 
 interface Props {
   onWorkoutPress?: () => void;
@@ -110,19 +111,14 @@ export default function TodayTab({ onWorkoutPress, onNutritionPress }: Props) {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Today's Workouts</Text>
         {todayWorkouts.map(workout => (
-          <View key={workout.id} style={styles.workoutCard}>
-            <Text style={styles.workoutTitle}>
-              {workout.name || 'Workout'}
-            </Text>
-            {workout.exercises.map((exercise: any) => (
-              <View key={exercise.exercise.id} style={styles.exerciseItem}>
-                <Text style={styles.exerciseName}>{exercise.exercise.name}</Text>
-                <Text style={styles.exerciseSets}>
-                  {exercise.sets.length} {exercise.sets.length === 1 ? 'set' : 'sets'}
-                </Text>
-              </View>
-            ))}
-          </View>
+          <WorkoutCard
+            key={workout.id}
+            workout={workout}
+            showActions={true}
+            compact={true}
+            onDeleted={loadTodayData}
+            onEdited={loadTodayData}
+          />
         ))}
       </View>
     );

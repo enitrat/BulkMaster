@@ -6,6 +6,8 @@ import { Workout, Exercise, MealEntry, HistoryView, Macros, Ingredient, WorkoutE
 import { nutritionService } from '../../services/nutritionService';
 import ExerciseHistoryList from '../Workout/ExerciseHistoryList';
 import { workoutService } from '@/services/workoutService';
+import MealCard from '../Nutrition/MealCard';
+import WorkoutCard from '../Workout/WorkoutCard';
 
 interface Props {
   workouts: Workout[];
@@ -109,30 +111,6 @@ export default function HistoryTab({ workouts, exercises, historyView, setHistor
     return markedDates;
   };
 
-  const handleDeleteWorkout = async (workoutId: string) => {
-    Alert.alert(
-      'Delete Workout',
-      'Are you sure you want to delete this workout? This action cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await workoutService.deleteWorkout(workoutId);
-              // Refresh the data for the current date
-              loadDayData(selectedDate);
-            } catch (error) {
-              console.error('Error deleting workout:', error);
-              Alert.alert('Error', 'Failed to delete workout');
-            }
-          },
-        },
-      ]
-    );
-  };
-
   const renderWorkouts = () => {
     if (selectedDateWorkouts.length === 0) return null;
 
@@ -140,27 +118,14 @@ export default function HistoryTab({ workouts, exercises, historyView, setHistor
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Workouts</Text>
         {selectedDateWorkouts.map(workout => (
-          <View key={workout.id} style={styles.workoutCard}>
-            <View style={styles.workoutHeader}>
-              <Text style={styles.workoutTitle}>
-                {workout.name || `Workout on ${new Date(workout.date).toLocaleDateString()}`}
-              </Text>
-              <TouchableOpacity
-                onPress={() => handleDeleteWorkout(workout.id)}
-                style={styles.deleteButton}
-              >
-                <Ionicons name="trash-outline" size={20} color="#FF3B30" />
-              </TouchableOpacity>
-            </View>
-            {workout.exercises.map((exercise: WorkoutExercise) => (
-              <View key={exercise.exercise.id} style={styles.exerciseItem}>
-                <Text style={styles.exerciseName}>{exercise.exercise.name}</Text>
-                <Text style={styles.exerciseSets}>
-                  {exercise.sets.length} {exercise.sets.length === 1 ? 'set' : 'sets'}
-                </Text>
-              </View>
-            ))}
-          </View>
+          <WorkoutCard
+            key={workout.id}
+            workout={workout}
+            showActions={true}
+            compact={false}
+            onDeleted={() => loadDayData(selectedDate)}
+            onEdited={() => loadDayData(selectedDate)}
+          />
         ))}
       </View>
     );
@@ -186,18 +151,15 @@ export default function HistoryTab({ workouts, exercises, historyView, setHistor
           />
         </View>
         {selectedDateMeals.map(meal => (
-          <View key={meal.id} style={styles.mealCard}>
-            <Text style={styles.mealName}>{meal.name}</Text>
-            <View style={styles.ingredientsList}>
-              {meal.ingredients.map((ing: Ingredient, index: number) => (
-                <View key={`${ing.name}-${index}`} style={styles.ingredientItem}>
-                  <Text style={styles.ingredientName}>{ing.name}</Text>
-                  <Text style={styles.ingredientWeight}>{ing.weight}g</Text>
-                </View>
-              ))}
-            </View>
-            <MacroSummary macros={calculateMealMacros(meal.ingredients)} />
-          </View>
+          <MealCard
+            key={meal.id}
+            meal={meal}
+            showImage={true}
+            showMacros={true}
+            showNotes={true}
+            onDeleted={() => loadDayData(selectedDate)}
+            onEdited={() => loadDayData(selectedDate)}
+          />
         ))}
       </View>
     );

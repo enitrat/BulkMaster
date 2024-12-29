@@ -1,23 +1,49 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Workout, WorkoutExercise } from '../../types/index';
+import { workoutService } from '@/services/workoutService';
 
 interface Props {
   workout: Workout;
   onPress?: () => void;
-  onDelete?: () => void;
   showActions?: boolean;
   compact?: boolean;
+  onDeleted?: () => void;
+  onEdited?: () => void;
 }
 
 export default function WorkoutCard({
   workout,
   onPress,
-  onDelete,
   showActions = true,
   compact = false,
+  onDeleted,
+  onEdited,
 }: Props) {
+  const handleDelete = () => {
+    Alert.alert(
+      'Delete Workout',
+      'Are you sure you want to delete this workout? This action cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await workoutService.deleteWorkout(workout.id);
+              onDeleted?.();
+            } catch (error) {
+              console.error('Error deleting workout:', error);
+              Alert.alert('Error', 'Failed to delete workout');
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const CardContent = () => (
     <>
       <View style={styles.workoutHeader}>
@@ -29,9 +55,9 @@ export default function WorkoutCard({
             {workout.exercises.length} exercises
           </Text>
         </View>
-        {showActions && onDelete && (
+        {showActions && (
           <TouchableOpacity
-            onPress={onDelete}
+            onPress={handleDelete}
             style={styles.deleteButton}
           >
             <Ionicons name="trash-outline" size={20} color="#FF3B30" />

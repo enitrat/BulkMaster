@@ -12,6 +12,7 @@ import { MealEntry, Ingredient, Macros } from '../../types/index';
 import { nutritionService } from '../../services/nutritionService';
 import { useFocusEffect } from '@react-navigation/native';
 import AddMealModal from '../Nutrition/AddMealModal';
+import MealCard from '../Nutrition/MealCard';
 
 const calculateMealMacros = (ingredients: Ingredient[]): Macros => {
   return ingredients.reduce((total, ing) => {
@@ -121,38 +122,17 @@ export default function NutritionTab() {
     );
   };
 
-  const renderMeal = ({ item }: { item: MealEntry }) => {
-    const macros = calculateMealMacros(item.ingredients);
-
-    return (
-      <TouchableOpacity
-        style={styles.mealCard}
-        onPress={() => handleEditMeal(item)}
-      >
-        <View style={styles.mealHeader}>
-          <Text style={styles.mealName}>{item.name}</Text>
-          <TouchableOpacity onPress={() => handleDeleteMeal(item.id)}>
-            <Ionicons name="trash-outline" size={20} color="#FF3B30" />
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.ingredientsList}>
-          {item.ingredients.map((ing, index) => (
-            <View key={`${ing.name}-${index}`} style={styles.ingredientItem}>
-              <Text style={styles.ingredientName}>{ing.name}</Text>
-              <Text style={styles.ingredientWeight}>{ing.weight}g</Text>
-            </View>
-          ))}
-        </View>
-
-        <MacroSummary macros={macros} />
-
-        {item.notes && (
-          <Text style={styles.mealNotes}>{item.notes}</Text>
-        )}
-      </TouchableOpacity>
-    );
-  };
+  const renderMeal = ({ item }: { item: MealEntry }) => (
+    <MealCard
+      meal={item}
+      showImage={true}
+      showMacros={true}
+      showNotes={true}
+      onDeleted={loadMeals}
+      onEdited={loadMeals}
+      onPress={() => handleEditMeal(item)}
+    />
+  );
 
   return (
     <View style={styles.container}>
