@@ -1,16 +1,20 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  FlatList,
-  Alert,
-  ScrollView,
-} from 'react-native';
+import { Alert, ScrollView, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import {
+  Surface,
+  Text,
+  TextInput,
+  Button,
+  IconButton,
+  List,
+  Chip,
+  Searchbar,
+  useTheme,
+  Card,
+  TouchableRipple,
+  Divider,
+} from 'react-native-paper';
 import { Exercise, ExerciseCategory } from '../types/index';
 import { exerciseService } from '../services/exerciseService';
 import { templateService } from '../services/templateService';
@@ -18,6 +22,7 @@ import AddExerciseModal from '../components/Workout/AddExerciseModal';
 import { useFocusEffect } from '@react-navigation/native';
 
 export default function NewTemplateScreen() {
+  const theme = useTheme();
   const { templateId } = useLocalSearchParams<{ templateId?: string }>();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -59,13 +64,10 @@ export default function NewTemplateScreen() {
       return matchesSearch && matchesCategory;
     })
     .sort((a, b) => {
-      // Sort by whether the exercise is selected
       const aSelected = selectedExercises.some(e => e.id === a.id);
       const bSelected = selectedExercises.some(e => e.id === b.id);
       if (aSelected && !bSelected) return -1;
       if (!aSelected && bSelected) return 1;
-
-      // Then sort alphabetically
       return a.name.localeCompare(b.name);
     });
 
@@ -133,25 +135,6 @@ export default function NewTemplateScreen() {
     );
   };
 
-  const renderExercise = ({ item }: { item: Exercise }) => {
-    const isSelected = selectedExercises.some(e => e.id === item.id);
-    return (
-      <TouchableOpacity
-        style={[styles.exerciseItem, isSelected && styles.selectedExercise]}
-        onPress={() => toggleExercise(item)}
-      >
-        <Text style={[styles.exerciseName, isSelected && styles.selectedText]}>
-          {item.name}
-        </Text>
-        {item.category && (
-          <Text style={[styles.categoryText, isSelected && styles.selectedText]}>
-            {item.category}
-          </Text>
-        )}
-      </TouchableOpacity>
-    );
-  };
-
   const handleExerciseAdded = async () => {
     await loadData();
     setSearchQuery('');
@@ -159,116 +142,138 @@ export default function NewTemplateScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>
-          {templateId ? 'Edit Template' : 'Create New Template'}
-        </Text>
-        {templateId && (
-          <TouchableOpacity
-            style={styles.deleteButton}
-            onPress={handleDeleteTemplate}
-          >
-            <Ionicons name="trash-outline" size={24} color="#FF3B30" />
-          </TouchableOpacity>
-        )}
-      </View>
-
-      <View style={styles.form}>
-        <TextInput
-          style={styles.input}
-          placeholder="Template Name"
-          value={name}
-          onChangeText={setName}
+    <Surface style={{ flex: 1 }}>
+      <Card style={{ elevation: 0 }}>
+        <Card.Title
+          title={templateId ? 'Edit Template' : 'Create New Template'}
+          right={(props) =>
+            templateId ? (
+              <IconButton
+                {...props}
+                icon="trash-can-outline"
+                iconColor={theme.colors.error}
+                onPress={handleDeleteTemplate}
+              />
+            ) : null
+          }
         />
-        <TextInput
-          style={[styles.input, styles.descriptionInput]}
-          placeholder="Description (optional)"
-          value={description}
-          onChangeText={setDescription}
-          multiline
-        />
-      </View>
 
-      <View style={styles.searchContainer}>
-        <View style={styles.searchInputContainer}>
-          <Ionicons name="search" size={20} color="#666" />
+        <Card.Content style={{ gap: 16 }}>
           <TextInput
-            style={styles.searchInput}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            placeholder="Search exercises..."
+            mode="outlined"
+            label="Template Name"
+            value={name}
+            onChangeText={setName}
           />
-        </View>
-        <TouchableOpacity
-          style={styles.addExerciseButton}
-          onPress={() => setShowAddExerciseModal(true)}
-        >
-          <Ionicons name="add" size={24} color="#007AFF" />
-        </TouchableOpacity>
-      </View>
 
-      <View style={styles.categoryFilter}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          <TouchableOpacity
-            style={[
-              styles.categoryButton,
-              selectedCategory === 'ALL' && styles.selectedCategory,
-            ]}
-            onPress={() => setSelectedCategory('ALL')}
-          >
-            <Text style={[
-              styles.categoryButtonText,
-              selectedCategory === 'ALL' && styles.selectedCategoryText
-            ]}>All</Text>
-          </TouchableOpacity>
-          {Object.values(ExerciseCategory).map((category) => (
-            <TouchableOpacity
-              key={category}
-              style={[
-                styles.categoryButton,
-                selectedCategory === category && styles.selectedCategory,
-              ]}
-              onPress={() => setSelectedCategory(category)}
+          <TextInput
+            mode="outlined"
+            label="Description (optional)"
+            value={description}
+            onChangeText={setDescription}
+            multiline
+            numberOfLines={4}
+          />
+        </Card.Content>
+      </Card>
+
+      <Divider />
+
+      <View style={{ flex: 1, flexDirection: 'column' }}>
+        <Card style={{ elevation: 0 }}>
+          <Card.Content style={{ gap: 16 }}>
+            <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+              <Searchbar
+                placeholder="Search exercises..."
+                onChangeText={setSearchQuery}
+                value={searchQuery}
+                style={{ flex: 1 }}
+              />
+              <IconButton
+                mode="contained-tonal"
+                icon="plus"
+                onPress={() => setShowAddExerciseModal(true)}
+              />
+            </View>
+
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ gap: 8 }}
             >
-              <Text style={[
-                styles.categoryButtonText,
-                selectedCategory === category && styles.selectedCategoryText
-              ]}>{category}</Text>
-            </TouchableOpacity>
-          ))}
+              <Chip
+                selected={selectedCategory === 'ALL'}
+                onPress={() => setSelectedCategory('ALL')}
+                mode="outlined"
+              >
+                All
+              </Chip>
+              {Object.values(ExerciseCategory).map((category) => (
+                <Chip
+                  key={category}
+                  selected={selectedCategory === category}
+                  onPress={() => setSelectedCategory(category)}
+                  mode="outlined"
+                >
+                  {category}
+                </Chip>
+              ))}
+            </ScrollView>
+          </Card.Content>
+        </Card>
+
+        <ScrollView style={{ flex: 1 }}>
+          <List.Section>
+            {filteredExercises.map(exercise => {
+              const isSelected = selectedExercises.some(e => e.id === exercise.id);
+              return (
+                <TouchableRipple
+                  key={exercise.id}
+                  onPress={() => toggleExercise(exercise)}
+                >
+                  <List.Item
+                    title={exercise.name}
+                    description={exercise.category}
+                    left={props => (
+                      <List.Icon
+                        {...props}
+                        icon={isSelected ? 'check-circle' : 'circle-outline'}
+                        color={isSelected ? theme.colors.primary : theme.colors.onSurfaceDisabled}
+                      />
+                    )}
+                    style={{
+                      backgroundColor: isSelected ? theme.colors.primaryContainer : undefined,
+                      borderRadius: 8,
+                      marginHorizontal: 16,
+                    }}
+                  />
+                </TouchableRipple>
+              );
+            })}
+
+            {filteredExercises.length === 0 && (
+              <Text
+                variant="bodyLarge"
+                style={{ textAlign: 'center', marginTop: 24, opacity: 0.7 }}
+              >
+                {searchQuery
+                  ? 'No exercises found matching your search'
+                  : 'No exercises available in this category'}
+              </Text>
+            )}
+          </List.Section>
         </ScrollView>
-      </View>
 
-      <FlatList
-        data={filteredExercises}
-        renderItem={renderExercise}
-        keyExtractor={(item) => item.id}
-        style={styles.exerciseList}
-        keyboardShouldPersistTaps="handled"
-        ListEmptyComponent={
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyStateText}>
-              {searchQuery
-                ? 'No exercises found matching your search'
-                : 'No exercises available in this category'}
+        <Card style={{ elevation: 0 }}>
+          <Card.Actions style={{ paddingHorizontal: 16, paddingVertical: 8, gap: 16 }}>
+            <Text variant="bodyMedium">
+              Selected: {selectedExercises.length} exercises
             </Text>
-          </View>
-        }
-      />
-
-      <View style={styles.footer}>
-        <Text style={styles.selectedCount}>
-          Selected: {selectedExercises.length} exercises
-        </Text>
-        <TouchableOpacity
-          style={styles.saveButton}
-          onPress={handleSaveTemplate}
-        >
-          <Text style={styles.saveButtonText}>
-            {templateId ? 'Save Changes' : 'Create Template'}
-          </Text>
-        </TouchableOpacity>
+            <Button mode="contained" onPress={handleSaveTemplate}>
+              {templateId ? 'Save Changes' : 'Create Template'}
+            </Button>
+          </Card.Actions>
+        </Card>
       </View>
 
       <AddExerciseModal
@@ -276,158 +281,6 @@ export default function NewTemplateScreen() {
         onClose={() => setShowAddExerciseModal(false)}
         onExerciseAdded={handleExerciseAdded}
       />
-    </View>
+    </Surface>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
-  header: {
-    padding: 16,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-  deleteButton: {
-    padding: 8,
-  },
-  form: {
-    padding: 16,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 12,
-    backgroundColor: '#fff',
-  },
-  descriptionInput: {
-    height: 80,
-    textAlignVertical: 'top',
-  },
-  categoryFilter: {
-    padding: 16,
-    backgroundColor: '#fff',
-  },
-  categoryButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: '#f0f0f0',
-    marginRight: 8,
-  },
-  selectedCategory: {
-    backgroundColor: '#007AFF',
-  },
-  categoryButtonText: {
-    color: '#333',
-  },
-  selectedCategoryText: {
-    color: '#fff',
-  },
-  exerciseList: {
-    flex: 1,
-    padding: 16,
-  },
-  exerciseItem: {
-    backgroundColor: '#fff',
-    padding: 16,
-    borderRadius: 8,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-  },
-  selectedExercise: {
-    backgroundColor: '#007AFF',
-    borderColor: '#007AFF',
-  },
-  exerciseName: {
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  categoryText: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 4,
-  },
-  selectedText: {
-    color: '#fff',
-  },
-  footer: {
-    padding: 16,
-    backgroundColor: '#fff',
-    borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
-  },
-  selectedCount: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 8,
-  },
-  saveButton: {
-    backgroundColor: '#007AFF',
-    padding: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  saveButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingHorizontal: 16,
-    marginBottom: 16,
-  },
-  searchInputContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-  },
-  searchInput: {
-    flex: 1,
-    padding: 8,
-    fontSize: 16,
-  },
-  addExerciseButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#007AFF',
-  },
-  emptyState: {
-    padding: 32,
-    alignItems: 'center',
-  },
-  emptyStateText: {
-    fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
-  },
-});

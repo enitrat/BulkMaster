@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
+import { ScrollView } from 'react-native';
+import { Surface } from 'react-native-paper';
 import { Exercise, Workout } from '../../types/index';
 import ExerciseHistory from './ExerciseHistory';
 
@@ -25,23 +26,18 @@ export default function ExerciseHistoryList({ exercises, workouts }: ExerciseHis
   };
 
   return (
-    <ScrollView style={styles.container}>
-      {exercisesWithHistory.map(exercise => (
-        <ExerciseHistory
-          key={exercise.id}
-          exercise={exercise}
-          workouts={workouts}
-          isExpanded={expandedExerciseId === exercise.id}
-          onToggle={() => handleToggle(exercise.id)}
-        />
-      ))}
-    </ScrollView>
+    <Surface style={{ flex: 1 }}>
+      <ScrollView style={{ flex: 1, padding: 16 }}>
+        {exercisesWithHistory.map(exercise => (
+          <ExerciseHistory
+            key={exercise.id}
+            exercise={exercise}
+            workouts={workouts}
+            isExpanded={expandedExerciseId === exercise.id}
+            onToggle={() => handleToggle(exercise.id)}
+          />
+        ))}
+      </ScrollView>
+    </Surface>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 16,
-  },
-});

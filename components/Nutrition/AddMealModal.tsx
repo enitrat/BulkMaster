@@ -1,18 +1,23 @@
 import React, { useState, useEffect } from 'react';
+import { View, ScrollView, Alert } from 'react-native';
 import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-  TextInput,
   Modal,
-  Alert,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+  Portal,
+  Text,
+  TextInput,
+  Button,
+  IconButton,
+  useTheme,
+  Surface,
+  Divider,
+  Card,
+  List,
+  MD3Colors
+} from 'react-native-paper';
 import { MealEntry, Ingredient } from '@/types/index';
 import FoodImageCapture from '@/components/Nutrition/FoodImageCapture';
 import IngredientList from '@/components/Nutrition/IngredientList';
+import IngredientForm from '@/components/Nutrition/IngredientForm';
 
 interface Props {
   visible: boolean;
@@ -21,26 +26,12 @@ interface Props {
   initialMeal?: Omit<MealEntry, 'id' | 'date'>;
 }
 
-interface IngredientFormData {
-  name: string;
-  weight: number;
-  macros?: {
-    calories?: number;
-    protein?: number;
-    carbs?: number;
-    fat?: number;
-  };
-}
-
 export default function AddMealModal({ visible, onClose, onSave, initialMeal }: Props) {
+  const theme = useTheme();
   const [name, setName] = useState('');
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [notes, setNotes] = useState('');
   const [showCamera, setShowCamera] = useState(false);
-  const [currentIngredient, setCurrentIngredient] = useState<IngredientFormData>({
-    name: '',
-    weight: 0,
-  });
   const [showIngredientForm, setShowIngredientForm] = useState(false);
 
   useEffect(() => {
@@ -55,14 +46,8 @@ export default function AddMealModal({ visible, onClose, onSave, initialMeal }: 
     }
   }, [initialMeal]);
 
-  const handleAddIngredient = () => {
-    if (!currentIngredient.name || !currentIngredient.weight) {
-      Alert.alert('Error', 'Please fill in all required fields');
-      return;
-    }
-
-    setIngredients(prev => [...prev, currentIngredient]);
-    setCurrentIngredient({ name: '', weight: 0 });
+  const handleAddIngredient = (ingredient: Ingredient) => {
+    setIngredients(prev => [...prev, ingredient]);
     setShowIngredientForm(false);
   };
 
@@ -100,74 +85,120 @@ export default function AddMealModal({ visible, onClose, onSave, initialMeal }: 
     setIngredients(prev => prev.filter((_, i) => i !== index));
   };
 
+  const containerStyle = {
+    backgroundColor: theme.colors.surface,
+    margin: 16,
+    borderRadius: theme.roundness,
+    height: '90%' as const,
+    overflow: 'hidden' as const,
+  };
+
+  const renderIngredientSection = () => {
+    if (ingredients.length === 0) {
+      return (
+        <Card mode="outlined" style={{ marginVertical: 8 }}>
+          <Card.Content style={{ alignItems: 'center', padding: 16 }}>
+            <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
+              No ingredients added yet
+            </Text>
+          </Card.Content>
+        </Card>
+      );
+    }
+
+    return (
+      <Card mode="outlined" style={{ marginVertical: 8 }}>
+        <Card.Content style={{ padding: 0 }}>
+          <IngredientList
+            ingredients={ingredients}
+            onUpdateIngredient={handleUpdateIngredient}
+            onDeleteIngredient={handleDeleteIngredient}
+          />
+        </Card.Content>
+      </Card>
+    );
+  };
+
   return (
-    <Modal visible={visible} animationType="slide">
-      <View style={styles.modalContainer}>
-        <View style={styles.modalHeader}>
-          <Text style={styles.modalTitle}>{initialMeal ? 'Edit Meal' : 'Add Meal'}</Text>
-          <TouchableOpacity onPress={onClose}>
-            <Ionicons name="close" size={24} color="#666" />
-          </TouchableOpacity>
-        </View>
+    <>
+      <Modal visible={visible} onDismiss={onClose} contentContainerStyle={containerStyle}>
+        <Card style={{ flex: 1 }}>
+          <Card.Title
+            title={initialMeal ? 'Edit Meal' : 'Add Meal'}
+            right={(props) => (
+              <IconButton
+                {...props}
+                icon="close"
+                onPress={onClose}
+                mode="contained-tonal"
+                size={20}
+              />
+            )}
+          />
 
-        <ScrollView style={styles.modalContent}>
-          <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Meal Name *</Text>
-            <TextInput
-              style={styles.input}
-              value={name}
-              onChangeText={setName}
-              placeholder="Enter meal name"
-            />
-          </View>
+          <Card.Content>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              <List.Section>
+                <List.Subheader>Basic Information</List.Subheader>
+                <TextInput
+                  label="Meal Name *"
+                  mode="outlined"
+                  value={name}
+                  onChangeText={setName}
+                  placeholder="Enter meal name"
+                />
+              </List.Section>
 
-          <View style={styles.ingredientsSection}>
-            <Text style={styles.sectionTitle}>Ingredients *</Text>
-            <IngredientList
-              ingredients={ingredients}
-              onUpdateIngredient={handleUpdateIngredient}
-              onDeleteIngredient={handleDeleteIngredient}
-            />
+              <Divider />
 
-            <View style={styles.addButtonsContainer}>
-              <TouchableOpacity
-                style={[styles.addButton, styles.cameraButton]}
-                onPress={() => setShowCamera(true)}
-              >
-                <Ionicons name="camera" size={20} color="#fff" />
-                <Text style={[styles.addButtonText, styles.cameraButtonText]}>Take Photo</Text>
-              </TouchableOpacity>
+              <List.Section>
+                <List.Subheader>Ingredients *</List.Subheader>
+                {renderIngredientSection()}
 
-              <TouchableOpacity
-                style={styles.addButton}
-                onPress={() => setShowIngredientForm(true)}
-              >
-                <Ionicons name="add-circle-outline" size={20} color="#007AFF" />
-                <Text style={styles.addButtonText}>Add Manually</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+                <View style={{ flexDirection: 'row', gap: 8, marginTop: 16 }}>
+                  <Button
+                    mode="contained"
+                    onPress={() => setShowCamera(true)}
+                    icon="camera"
+                    style={{ flex: 1 }}
+                  >
+                    Take Photo
+                  </Button>
 
-          <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Notes (optional)</Text>
-            <TextInput
-              style={[styles.input, styles.notesInput]}
-              value={notes}
-              onChangeText={setNotes}
-              placeholder="Add any notes"
-              multiline
-            />
-          </View>
-        </ScrollView>
+                  <Button
+                    mode="outlined"
+                    onPress={() => setShowIngredientForm(true)}
+                    icon="plus"
+                    style={{ flex: 1 }}
+                  >
+                    Add Manually
+                  </Button>
+                </View>
+              </List.Section>
 
-        <View style={styles.modalFooter}>
-          <TouchableOpacity
-            style={[styles.button, styles.saveButton]}
-            onPress={handleSave}
-          >
-            <Text style={styles.buttonText}>{initialMeal ? 'Save Changes' : 'Save Meal'}</Text>
-          </TouchableOpacity>
-        </View>
+              <Divider />
+
+              <List.Section>
+                <List.Subheader>Additional Information</List.Subheader>
+                <TextInput
+                  label="Notes (optional)"
+                  mode="outlined"
+                  value={notes}
+                  onChangeText={setNotes}
+                  placeholder="Add any notes"
+                  multiline
+                  numberOfLines={4}
+                />
+              </List.Section>
+            </ScrollView>
+          </Card.Content>
+
+          <Card.Actions style={{ justifyContent: 'flex-end', padding: 16 }}>
+            <Button mode="contained" onPress={handleSave}>
+              {initialMeal ? 'Save Changes' : 'Save Meal'}
+            </Button>
+          </Card.Actions>
+        </Card>
 
         {showCamera && (
           <FoodImageCapture
@@ -176,221 +207,16 @@ export default function AddMealModal({ visible, onClose, onSave, initialMeal }: 
             visible={showCamera}
           />
         )}
+      </Modal>
 
-        <Modal visible={showIngredientForm} animationType="slide">
-          <View style={styles.modalContainer}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Add Ingredient</Text>
-              <TouchableOpacity onPress={() => setShowIngredientForm(false)}>
-                <Ionicons name="close" size={24} color="#666" />
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView style={styles.modalContent}>
-              <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Name *</Text>
-                <TextInput
-                  style={styles.input}
-                  value={currentIngredient.name}
-                  onChangeText={(text) => setCurrentIngredient(prev => ({ ...prev, name: text }))}
-                  placeholder="Enter ingredient name"
-                />
-              </View>
-
-              <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Weight (g) *</Text>
-                <TextInput
-                  style={styles.input}
-                  value={currentIngredient.weight.toString()}
-                  onChangeText={(text) => setCurrentIngredient(prev => ({ ...prev, weight: Number(text) || 0 }))}
-                  keyboardType="numeric"
-                  placeholder="Enter weight in grams"
-                />
-              </View>
-
-              <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Macros (optional)</Text>
-                <View style={styles.macrosInputContainer}>
-                  <View style={styles.macroInput}>
-                    <Text style={styles.macroInputLabel}>Calories</Text>
-                    <TextInput
-                      style={styles.input}
-                      value={currentIngredient.macros?.calories?.toString()}
-                      onChangeText={(text) => setCurrentIngredient(prev => ({
-                        ...prev,
-                        macros: { ...prev.macros, calories: Number(text) || undefined }
-                      }))}
-                      keyboardType="numeric"
-                      placeholder="kcal"
-                    />
-                  </View>
-                  <View style={styles.macroInput}>
-                    <Text style={styles.macroInputLabel}>Protein</Text>
-                    <TextInput
-                      style={styles.input}
-                      value={currentIngredient.macros?.protein?.toString()}
-                      onChangeText={(text) => setCurrentIngredient(prev => ({
-                        ...prev,
-                        macros: { ...prev.macros, protein: Number(text) || undefined }
-                      }))}
-                      keyboardType="numeric"
-                      placeholder="g"
-                    />
-                  </View>
-                  <View style={styles.macroInput}>
-                    <Text style={styles.macroInputLabel}>Carbs</Text>
-                    <TextInput
-                      style={styles.input}
-                      value={currentIngredient.macros?.carbs?.toString()}
-                      onChangeText={(text) => setCurrentIngredient(prev => ({
-                        ...prev,
-                        macros: { ...prev.macros, carbs: Number(text) || undefined }
-                      }))}
-                      keyboardType="numeric"
-                      placeholder="g"
-                    />
-                  </View>
-                  <View style={styles.macroInput}>
-                    <Text style={styles.macroInputLabel}>Fat</Text>
-                    <TextInput
-                      style={styles.input}
-                      value={currentIngredient.macros?.fat?.toString()}
-                      onChangeText={(text) => setCurrentIngredient(prev => ({
-                        ...prev,
-                        macros: { ...prev.macros, fat: Number(text) || undefined }
-                      }))}
-                      keyboardType="numeric"
-                      placeholder="g"
-                    />
-                  </View>
-                </View>
-              </View>
-            </ScrollView>
-
-            <View style={styles.modalFooter}>
-              <TouchableOpacity
-                style={[styles.button, styles.saveButton]}
-                onPress={handleAddIngredient}
-              >
-                <Text style={styles.buttonText}>Add Ingredient</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
-      </View>
-    </Modal>
+      {showIngredientForm && (
+        <IngredientForm
+          visible={showIngredientForm}
+          onClose={() => setShowIngredientForm(false)}
+          onSave={handleAddIngredient}
+          mode="add"
+        />
+      )}
+    </>
   );
 }
-
-const styles = StyleSheet.create({
-  modalContainer: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  modalContent: {
-    flex: 1,
-    padding: 16,
-  },
-  modalFooter: {
-    padding: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
-  },
-  inputContainer: {
-    marginBottom: 16,
-  },
-  inputLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#666',
-    marginBottom: 8,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-  },
-  notesInput: {
-    height: 100,
-    textAlignVertical: 'top',
-  },
-  ingredientsSection: {
-    marginBottom: 16,
-  },
-  sectionTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#666',
-    marginBottom: 8,
-  },
-  addButtonsContainer: {
-    flexDirection: 'row',
-    gap: 8,
-    marginTop: 12,
-  },
-  addButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#007AFF',
-    gap: 8,
-    backgroundColor: '#fff',
-  },
-  cameraButton: {
-    backgroundColor: '#007AFF',
-    borderColor: '#007AFF',
-  },
-  addButtonText: {
-    color: '#007AFF',
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  cameraButtonText: {
-    color: '#fff',
-  },
-  button: {
-    padding: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  saveButton: {
-    backgroundColor: '#007AFF',
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  macrosInputContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  macroInput: {
-    flex: 1,
-    minWidth: '45%',
-  },
-  macroInputLabel: {
-    fontSize: 12,
-    color: '#666',
-    marginBottom: 4,
-  },
-});

@@ -1,7 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, Alert } from 'react-native';
+import { Alert } from 'react-native';
 import { router } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { Surface, Card, Text, Button, IconButton, List, useTheme, FAB } from 'react-native-paper';
 import { WorkoutTemplate, Workout } from '@/types/index';
 import { templateService } from '@/services/templateService';
 import { workoutService } from '@/services/workoutService';
@@ -13,6 +13,8 @@ interface Props {
 }
 
 export default function WorkoutsTab({ templates, activeWorkout, onDataChange }: Props) {
+  const theme = useTheme();
+
   const handleCancelWorkout = () => {
     Alert.alert(
       'Cancel Workout',
@@ -49,200 +51,106 @@ export default function WorkoutsTab({ templates, activeWorkout, onDataChange }: 
     );
   };
 
-  const renderTemplate = ({ item }: { item: WorkoutTemplate }) => (
-    <TouchableOpacity
-      style={styles.card}
+  const renderTemplate = (template: WorkoutTemplate) => (
+    <Card
+      mode="outlined"
+      style={{ marginBottom: 12 }}
       onPress={() => {
         router.push({
           pathname: '/new-template',
-          params: { templateId: item.id },
+          params: { templateId: template.id },
         });
       }}
     >
-      <View style={styles.cardHeader}>
-        <View>
-          <Text style={styles.cardTitle}>{item.name}</Text>
-          <Text style={styles.cardSubtitle}>
-            {item.exercises.length} exercises
-          </Text>
-        </View>
-        <TouchableOpacity
-          onPress={() => handleDeleteTemplate(item)}
-          style={styles.deleteButton}
-        >
-          <Ionicons name="trash-outline" size={24} color="#FF3B30" />
-        </TouchableOpacity>
-      </View>
-    </TouchableOpacity>
+      <Card.Title
+        title={template.name}
+        subtitle={`${template.exercises.length} exercises`}
+        right={(props) => (
+          <IconButton
+            {...props}
+            icon="trash-can-outline"
+            iconColor={theme.colors.error}
+            onPress={() => handleDeleteTemplate(template)}
+          />
+        )}
+      />
+    </Card>
   );
 
   return (
-    <View style={styles.container}>
-      {activeWorkout ? (
-        <View style={styles.activeWorkoutContainer}>
-          <View style={styles.activeWorkoutInfo}>
-            <Text style={styles.activeWorkoutTitle}>Active Workout</Text>
-            <Text style={styles.activeWorkoutSubtitle}>
-              {activeWorkout.exercises.length} exercises in progress
-            </Text>
-          </View>
-          <View style={styles.activeWorkoutActions}>
-            <TouchableOpacity
-              style={[styles.button, styles.continueButton]}
-              onPress={() => router.push('/workout-in-progress')}
-            >
-              <Text style={styles.buttonText}>Continue Workout</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.button, styles.cancelButton]}
-              onPress={handleCancelWorkout}
-            >
-              <Text style={[styles.buttonText, styles.cancelButtonText]}>Cancel</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      ) : (
-        <TouchableOpacity
-          style={[styles.button, styles.primaryButton]}
-          onPress={() => router.push('/new-workout')}
-        >
-          <Text style={styles.buttonText}>Start New Workout</Text>
-        </TouchableOpacity>
-      )}
+    <Surface style={{ flex: 1 }}>
+      <List.Section style={{ padding: 16, flex: 1 }}>
+        {activeWorkout && (
+          <Card mode="outlined" style={{ marginBottom: 16 }}>
+            <Card.Title
+              title="Active Workout"
+              subtitle={`${activeWorkout.exercises.length} exercises in progress`}
+              titleVariant="titleLarge"
+            />
+            <Card.Actions style={{ justifyContent: 'flex-end', gap: 8 }}>
+              <Button
+                mode="contained"
+                onPress={() => router.push('/workout-in-progress')}
+                style={{ flex: 2 }}
+              >
+                Continue Workout
+              </Button>
+              <Button
+                mode="outlined"
+                textColor={theme.colors.error}
+                onPress={handleCancelWorkout}
+                style={{ flex: 1 }}
+              >
+                Cancel
+              </Button>
+            </Card.Actions>
+          </Card>
+        )}
 
-      <TouchableOpacity
-        style={styles.addTemplateButton}
-        onPress={() => router.push('/new-template')}
-      >
-        <Ionicons name="add-circle-outline" size={24} color="#007AFF" />
-        <Text style={styles.addTemplateText}>Create New Template</Text>
-      </TouchableOpacity>
+        <List.Subheader style={{ fontSize: 20, fontWeight: 'bold', paddingHorizontal: 0 }}>
+          Your Templates
+        </List.Subheader>
 
-      <Text style={styles.sectionTitle}>Your Templates</Text>
-      <FlatList
-        data={templates}
-        renderItem={renderTemplate}
-        keyExtractor={(item) => item.id}
-        ListEmptyComponent={
-          <Text style={styles.emptyText}>
+        {templates.map(template => (
+          <React.Fragment key={template.id}>
+            {renderTemplate(template)}
+          </React.Fragment>
+        ))}
+
+        {templates.length === 0 && (
+          <Text
+            variant="bodyLarge"
+            style={{
+              textAlign: 'center',
+              marginTop: 24,
+              opacity: 0.7,
+            }}
+          >
             No templates yet. Create one to get started!
           </Text>
-        }
+        )}
+
+        <Button
+          mode="outlined"
+          icon="plus"
+          onPress={() => router.push('/new-template')}
+          style={{ marginTop: 16 }}
+        >
+          Create New Template
+        </Button>
+      </List.Section>
+
+      <FAB
+        icon="plus"
+        label="New Workout"
+        style={{
+          position: 'absolute',
+          margin: 16,
+          right: 0,
+          bottom: 0,
+        }}
+        onPress={() => router.push('/new-workout')}
       />
-    </View>
+    </Surface>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 16,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginTop: 24,
-    marginBottom: 16,
-  },
-  activeWorkoutContainer: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 16,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#007AFF',
-  },
-  activeWorkoutInfo: {
-    marginBottom: 12,
-  },
-  activeWorkoutTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#007AFF',
-  },
-  activeWorkoutSubtitle: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 4,
-  },
-  activeWorkoutActions: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  button: {
-    padding: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  primaryButton: {
-    backgroundColor: '#007AFF',
-    marginBottom: 16,
-  },
-  continueButton: {
-    backgroundColor: '#007AFF',
-    flex: 2,
-  },
-  cancelButton: {
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#FF3B30',
-    flex: 1,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  cancelButtonText: {
-    color: '#FF3B30',
-  },
-  addTemplateButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 12,
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#007AFF',
-    gap: 8,
-  },
-  addTemplateText: {
-    color: '#007AFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  card: {
-    backgroundColor: '#fff',
-    padding: 16,
-    borderRadius: 8,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  cardSubtitle: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 4,
-  },
-  deleteButton: {
-    padding: 4,
-  },
-  emptyText: {
-    textAlign: 'center',
-    color: '#666',
-    fontSize: 16,
-    marginTop: 24,
-  },
-});

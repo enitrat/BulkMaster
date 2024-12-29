@@ -1,14 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Animated,
-  Vibration,
-  Platform,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { View, Platform, Vibration } from 'react-native';
+import { Card, Text, IconButton, Button, useTheme, Surface } from 'react-native-paper';
+import Animated, {
+  useAnimatedStyle,
+  withTiming,
+  useSharedValue,
+  withSpring,
+} from 'react-native-reanimated';
 
 const DEFAULT_DURATIONS = [60, 90, 120, 180]; // in seconds
 
@@ -17,10 +15,11 @@ type RestTimerProps = {
 };
 
 export default function RestTimer({ onComplete }: RestTimerProps) {
+  const theme = useTheme();
   const [isActive, setIsActive] = useState(false);
   const [duration, setDuration] = useState(90); // default 90 seconds
   const [timeLeft, setTimeLeft] = useState(duration);
-  const progressAnim = useRef(new Animated.Value(1)).current;
+  const progress = useSharedValue(1);
   const timerRef = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
@@ -44,11 +43,7 @@ export default function RestTimer({ onComplete }: RestTimerProps) {
       }, 1000);
 
       // Animate progress bar
-      Animated.timing(progressAnim, {
-        toValue: 0,
-        duration: timeLeft * 1000,
-        useNativeDriver: false,
-      }).start();
+      progress.value = withTiming(0, { duration: timeLeft * 1000 });
     }
 
     return () => {
@@ -66,7 +61,7 @@ export default function RestTimer({ onComplete }: RestTimerProps) {
     const duration = newDuration || DEFAULT_DURATIONS[1];
     setDuration(duration);
     setTimeLeft(duration);
-    progressAnim.setValue(1);
+    progress.value = withSpring(1);
   };
 
   const toggleTimer = () => {
@@ -82,138 +77,60 @@ export default function RestTimer({ onComplete }: RestTimerProps) {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const progressBarWidth = progressAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0%', '100%'],
-  });
+  const animatedStyle = useAnimatedStyle(() => ({
+    width: `${progress.value * 100}%`,
+  }));
 
   return (
-    <View style={styles.container}>
-      <View style={styles.timerCard}>
-        <View style={styles.progressContainer}>
-          <Animated.View
-            style={[
-              styles.progressBar,
-              {
-                width: progressBarWidth,
-                backgroundColor: timeLeft > 10 ? '#007AFF' : '#FF3B30',
-              },
-            ]}
-          />
-        </View>
-
-        <Text style={styles.timeText}>{formatTime(timeLeft)}</Text>
-
-        <View style={styles.controls}>
-          <TouchableOpacity
-            style={[styles.button, styles.controlButton]}
-            onPress={toggleTimer}
-          >
-            <Ionicons
-              name={isActive ? 'pause' : 'play'}
-              size={24}
-              color="#007AFF"
-            />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.button, styles.controlButton]}
-            onPress={() => resetTimer()}
-          >
-            <Ionicons name="refresh" size={24} color="#007AFF" />
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.presets}>
-          {DEFAULT_DURATIONS.map(preset => (
-            <TouchableOpacity
-              key={preset}
+    <Surface style={{ margin: 16 }} elevation={1}>
+      <Card>
+        <Card.Content style={{ gap: 16 }}>
+          <View style={{ height: 4, backgroundColor: theme.colors.surfaceVariant, borderRadius: 2, overflow: 'hidden' }}>
+            <Animated.View
               style={[
-                styles.presetButton,
-                duration === preset && styles.activePreset,
+                {
+                  height: '100%',
+                  backgroundColor: timeLeft > 10 ? theme.colors.primary : theme.colors.error,
+                },
+                animatedStyle,
               ]}
-              onPress={() => resetTimer(preset)}
-            >
-              <Text
-                style={[
-                  styles.presetText,
-                  duration === preset && styles.activePresetText,
-                ]}
+            />
+          </View>
+
+          <Text variant="displayMedium" style={{ textAlign: 'center', fontVariant: ['tabular-nums'] }}>
+            {formatTime(timeLeft)}
+          </Text>
+
+          <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 16 }}>
+            <IconButton
+              mode="contained-tonal"
+              icon={isActive ? 'pause' : 'play'}
+              size={32}
+              onPress={toggleTimer}
+            />
+            <IconButton
+              mode="contained-tonal"
+              icon="refresh"
+              size={32}
+              onPress={() => resetTimer()}
+            />
+          </View>
+
+          <View style={{ flexDirection: 'row', justifyContent: 'space-around' }}>
+            {DEFAULT_DURATIONS.map(preset => (
+              <Button
+                key={preset}
+                mode={duration === preset ? 'contained' : 'outlined'}
+                onPress={() => resetTimer(preset)}
+                style={{ borderRadius: 20 }}
+                compact
               >
                 {preset}s
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
-    </View>
+              </Button>
+            ))}
+          </View>
+        </Card.Content>
+      </Card>
+    </Surface>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    padding: 16,
-  },
-  timerCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-  },
-  progressContainer: {
-    height: 4,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 2,
-    overflow: 'hidden',
-    marginBottom: 16,
-  },
-  progressBar: {
-    height: '100%',
-    backgroundColor: '#007AFF',
-  },
-  timeText: {
-    fontSize: 48,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 16,
-    fontVariant: ['tabular-nums'],
-  },
-  controls: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 16,
-    marginBottom: 16,
-  },
-  button: {
-    padding: 12,
-    borderRadius: 8,
-    backgroundColor: '#f0f0f0',
-  },
-  controlButton: {
-    width: 48,
-    height: 48,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  presets: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-  },
-  presetButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    backgroundColor: '#f0f0f0',
-  },
-  activePreset: {
-    backgroundColor: '#007AFF',
-  },
-  presetText: {
-    color: '#666',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  activePresetText: {
-    color: '#fff',
-  },
-});

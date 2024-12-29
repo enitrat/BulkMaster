@@ -1,8 +1,8 @@
-import React, { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
+import React, { useMemo } from 'react';
+import { View } from 'react-native';
 import { CartesianChart, Line, Scatter } from 'victory-native';
 import { useFont } from '@shopify/react-native-skia';
-import { Ionicons } from '@expo/vector-icons';
+import { Card, Text, useTheme, List } from 'react-native-paper';
 import { Workout, Exercise } from '../../types/index';
 
 type ExerciseHistoryProps = {
@@ -18,6 +18,8 @@ type ChartData = {
 };
 
 export default function ExerciseHistory({ exercise, workouts, isExpanded = false, onToggle }: ExerciseHistoryProps) {
+  const theme = useTheme();
+
   const chartData = useMemo(() => {
     const exerciseData = workouts
       .filter(workout => workout.exercises.some(e => e.exercise.id === exercise.id))
@@ -51,30 +53,19 @@ export default function ExerciseHistory({ exercise, workouts, isExpanded = false
   const bestWeight = Math.max(...chartData.map(d => d.weight));
 
   return (
-    <View style={styles.container}>
-      <TouchableOpacity
-        style={styles.header}
+    <Card
+      mode="outlined"
+      style={{ marginBottom: 12 }}
+      onPress={onToggle}
+    >
+      <List.Accordion
+        title={exercise.name}
+        description={`Best: ${bestWeight}kg • ${chartData.length} workouts`}
+        expanded={isExpanded}
         onPress={onToggle}
-        activeOpacity={0.7}
       >
-        <View style={styles.headerContent}>
-          <View>
-            <Text style={styles.title}>{exercise.name}</Text>
-            <Text style={styles.subtitle}>
-              Best: {bestWeight}kg • {chartData.length} workouts
-            </Text>
-          </View>
-          <Ionicons
-            name={isExpanded ? "chevron-up" : "chevron-down"}
-            size={24}
-            color="#666"
-          />
-        </View>
-      </TouchableOpacity>
-
-      {isExpanded && (
-        <>
-          <View style={styles.chartContainer}>
+        <Card.Content>
+          <View style={{ height: 300, marginVertical: 16 }}>
             <CartesianChart
               data={chartData}
               xKey="date"
@@ -87,78 +78,33 @@ export default function ExerciseHistory({ exercise, workouts, isExpanded = false
             >
               {({ points }) => (
                 <>
-                  <Line points={points.weight} color="#007AFF" strokeWidth={2} />
-                  <Scatter points={points.weight} color="#007AFF" radius={4} />
+                  <Line points={points.weight} color={theme.colors.primary} strokeWidth={2} />
+                  <Scatter points={points.weight} color={theme.colors.primary} radius={4} />
                 </>
               )}
             </CartesianChart>
           </View>
 
-          <View style={styles.stats}>
-            <View style={styles.statItem}>
-              <Text style={styles.statLabel}>Best Weight</Text>
-              <Text style={styles.statValue}>{bestWeight}kg</Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-around', paddingVertical: 16 }}>
+            <View style={{ alignItems: 'center' }}>
+              <Text variant="labelMedium" style={{ color: theme.colors.onSurfaceVariant }}>
+                Best Weight
+              </Text>
+              <Text variant="titleLarge" style={{ color: theme.colors.primary }}>
+                {bestWeight}kg
+              </Text>
             </View>
-            <View style={styles.statItem}>
-              <Text style={styles.statLabel}>Times Performed</Text>
-              <Text style={styles.statValue}>{chartData.length}</Text>
+            <View style={{ alignItems: 'center' }}>
+              <Text variant="labelMedium" style={{ color: theme.colors.onSurfaceVariant }}>
+                Times Performed
+              </Text>
+              <Text variant="titleLarge" style={{ color: theme.colors.primary }}>
+                {chartData.length}
+              </Text>
             </View>
           </View>
-        </>
-      )}
-    </View>
+        </Card.Content>
+      </List.Accordion>
+    </Card>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    marginBottom: 12,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-  },
-  header: {
-    padding: 16,
-  },
-  headerContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  subtitle: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 4,
-  },
-  chartContainer: {
-    height: 300,
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-  },
-  stats: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
-  },
-  statItem: {
-    alignItems: 'center',
-  },
-  statLabel: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 4,
-  },
-  statValue: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#007AFF',
-  },
-});

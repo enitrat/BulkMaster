@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, Alert } from 'react-native';
+import { View, Alert } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import { Surface, useTheme, Appbar, BottomNavigation, Text } from 'react-native-paper';
 import { WorkoutTemplate, Workout, Exercise, HistoryView } from '../types/index';
 import { templateService } from '../services/templateService';
 import { exerciseService } from '../services/exerciseService';
@@ -9,15 +10,13 @@ import TodayTab from '../components/Tabs/TodayTab';
 import WorkoutsTab from '../components/Tabs/WorkoutsTab';
 import NutritionTab from '../components/Tabs/NutritionTab';
 import HistoryTab from '../components/Tabs/HistoryTab';
-import TabBar from '../components/TabBar';
-
-type MainTab = 'today' | 'workouts' | 'nutrition' | 'history';
 
 export default function HomeScreen() {
+  const theme = useTheme();
   const [templates, setTemplates] = useState<WorkoutTemplate[]>([]);
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [activeWorkout, setActiveWorkout] = useState<Workout | null>(null);
-  const [activeTab, setActiveTab] = useState<MainTab>('today');
+  const [index, setIndex] = useState(0);
   const [historyView, setHistoryView] = useState<HistoryView>('calendar');
   const [exercises, setExercises] = useState<Exercise[]>([]);
 
@@ -61,69 +60,51 @@ export default function HomeScreen() {
     }, [loadData])
   );
 
-  const renderContent = () => {
-    switch (activeTab) {
-      case 'today':
-        return <TodayTab />;
-      case 'workouts':
-        return <WorkoutsTab
-          templates={templates}
-          activeWorkout={activeWorkout}
-          onDataChange={loadData}
-        />;
-      case 'nutrition':
-        return <NutritionTab />;
-      case 'history':
-        return (
-          <HistoryTab
-            workouts={workouts}
-            exercises={exercises}
-            historyView={historyView}
-            setHistoryView={setHistoryView}
-          />
-        );
-      default:
-        return null;
-    }
-  };
+  const routes = [
+    { key: 'today', title: 'Today', focusedIcon: 'calendar-today', unfocusedIcon: 'calendar-today' },
+    { key: 'workouts', title: 'Workouts', focusedIcon: 'dumbbell', unfocusedIcon: 'dumbbell' },
+    { key: 'nutrition', title: 'Nutrition', focusedIcon: 'food-apple', unfocusedIcon: 'food-apple' },
+    { key: 'history', title: 'History', focusedIcon: 'history', unfocusedIcon: 'history' },
+  ];
+
+  const renderScene = BottomNavigation.SceneMap({
+    today: () => <TodayTab />,
+    workouts: () => (
+      <WorkoutsTab
+        templates={templates}
+        activeWorkout={activeWorkout}
+        onDataChange={loadData}
+      />
+    ),
+    nutrition: () => <NutritionTab />,
+    history: () => (
+      <HistoryTab
+        workouts={workouts}
+        exercises={exercises}
+        historyView={historyView}
+        setHistoryView={setHistoryView}
+      />
+    ),
+  });
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>BulkMaster</Text>
-      </View>
-
-      {renderContent()}
-
-      <TabBar
-        activeTab={activeTab}
-        onTabPress={(tabId: string) => setActiveTab(tabId as MainTab)}
-        tabs={[
-          { id: 'today', icon: 'today', label: 'Today' },
-          { id: 'workouts', icon: 'barbell', label: 'Workouts' },
-          { id: 'nutrition', icon: 'restaurant', label: 'Nutrition' },
-          { id: 'history', icon: 'calendar', label: 'History' },
-        ]}
+    <Surface style={{ flex: 1 }}>
+      <BottomNavigation
+        navigationState={{ index, routes }}
+        onIndexChange={setIndex}
+        renderScene={renderScene}
+        sceneAnimationType="shifting"
+        sceneAnimationEnabled={true}
+        compact={false}
+        safeAreaInsets={{ bottom: 0 }}
+        theme={{
+          ...theme,
+          colors: {
+            ...theme.colors,
+            secondaryContainer: 'transparent',
+          },
+        }}
       />
-    </View>
+    </Surface>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
-  header: {
-    paddingTop: 48,
-    paddingBottom: 8,
-    paddingHorizontal: 16,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-});

@@ -1,8 +1,17 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { ScrollView, Alert } from 'react-native';
 import { Calendar } from 'react-native-calendars';
-import { Ionicons } from '@expo/vector-icons';
-import { Workout, Exercise, MealEntry, HistoryView, Macros, Ingredient, WorkoutExercise, ExerciseSet } from '../../types/index';
+import {
+  Surface,
+  Text,
+  Card,
+  useTheme,
+  List,
+  SegmentedButtons,
+  IconButton,
+  Chip,
+} from 'react-native-paper';
+import { Workout, Exercise, MealEntry, HistoryView, Macros, Ingredient } from '../../types/index';
 import { nutritionService } from '../../services/nutritionService';
 import ExerciseHistoryList from '../Workout/ExerciseHistoryList';
 import { workoutService } from '@/services/workoutService';
@@ -14,13 +23,6 @@ interface Props {
   exercises: Exercise[];
   historyView: HistoryView;
   setHistoryView: (view: HistoryView) => void;
-}
-
-interface ExerciseWithHistory extends Exercise {
-  history: {
-    date: Date;
-    sets: ExerciseSet[];
-  }[];
 }
 
 const calculateMealMacros = (ingredients: Ingredient[]): Macros => {
@@ -36,25 +38,26 @@ const calculateMealMacros = (ingredients: Ingredient[]): Macros => {
 };
 
 const MacroSummary: React.FC<{ macros: Macros }> = ({ macros }) => {
+  const theme = useTheme();
   if (!macros.calories && !macros.protein && !macros.carbs && !macros.fat) {
     return null;
   }
 
   return (
-    <View style={styles.macroSummary}>
+    <Card.Content style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginVertical: 8 }}>
       {macros.calories !== undefined && (
-        <Text style={styles.macroText}>{Math.round(macros.calories)} kcal</Text>
+        <Chip icon="fire">{Math.round(macros.calories)} kcal</Chip>
       )}
       {macros.protein !== undefined && (
-        <Text style={styles.macroText}>{Math.round(macros.protein)}g protein</Text>
+        <Chip icon="food-steak">{Math.round(macros.protein)}g protein</Chip>
       )}
       {macros.carbs !== undefined && (
-        <Text style={styles.macroText}>{Math.round(macros.carbs)}g carbs</Text>
+        <Chip icon="bread-slice">{Math.round(macros.carbs)}g carbs</Chip>
       )}
       {macros.fat !== undefined && (
-        <Text style={styles.macroText}>{Math.round(macros.fat)}g fat</Text>
+        <Chip icon="oil">{Math.round(macros.fat)}g fat</Chip>
       )}
-    </View>
+    </Card.Content>
   );
 };
 
@@ -76,6 +79,7 @@ interface CalendarDayInfo {
 }
 
 export default function HistoryTab({ workouts, exercises, historyView, setHistoryView }: Props) {
+  const theme = useTheme();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedDateMeals, setSelectedDateMeals] = useState<MealEntry[]>([]);
   const [selectedDateWorkouts, setSelectedDateWorkouts] = useState<Workout[]>([]);
@@ -97,14 +101,14 @@ export default function HistoryTab({ workouts, exercises, historyView, setHistor
 
     workouts.forEach((workout: Workout) => {
       const date = new Date(workout.date).toISOString().split('T')[0];
-      markedDates[date] = markedDates[date] || { marked: true, dotColor: '#007AFF' };
+      markedDates[date] = markedDates[date] || { marked: true, dotColor: theme.colors.primary };
     });
 
     if (selectedDate) {
       markedDates[selectedDate.toISOString().split('T')[0]] = {
         ...markedDates[selectedDate.toISOString().split('T')[0]],
         selected: true,
-        selectedColor: '#007AFF',
+        selectedColor: theme.colors.primary,
       };
     }
 
@@ -115,8 +119,10 @@ export default function HistoryTab({ workouts, exercises, historyView, setHistor
     if (selectedDateWorkouts.length === 0) return null;
 
     return (
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Workouts</Text>
+      <List.Section>
+        <List.Subheader style={{ fontSize: 20, fontWeight: 'bold', paddingHorizontal: 0 }}>
+          Workouts
+        </List.Subheader>
         {selectedDateWorkouts.map(workout => (
           <WorkoutCard
             key={workout.id}
@@ -127,29 +133,31 @@ export default function HistoryTab({ workouts, exercises, historyView, setHistor
             onEdited={() => loadDayData(selectedDate)}
           />
         ))}
-      </View>
+      </List.Section>
     );
   };
 
   const renderNutrition = () => {
     if (selectedDateMeals.length === 0) return null;
 
+    const totalMacros = selectedDateMeals.reduce((total: Macros, meal: MealEntry) => {
+      const mealMacros = calculateMealMacros(meal.ingredients);
+      return {
+        calories: (total.calories || 0) + (mealMacros.calories || 0),
+        protein: (total.protein || 0) + (mealMacros.protein || 0),
+        carbs: (total.carbs || 0) + (mealMacros.carbs || 0),
+        fat: (total.fat || 0) + (mealMacros.fat || 0),
+      };
+    }, {} as Macros);
+
     return (
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Nutrition</Text>
-        <View style={styles.nutritionSummary}>
-          <MacroSummary
-            macros={selectedDateMeals.reduce((total: Macros, meal: MealEntry) => {
-              const mealMacros = calculateMealMacros(meal.ingredients);
-              return {
-                calories: (total.calories || 0) + (mealMacros.calories || 0),
-                protein: (total.protein || 0) + (mealMacros.protein || 0),
-                carbs: (total.carbs || 0) + (mealMacros.carbs || 0),
-                fat: (total.fat || 0) + (mealMacros.fat || 0),
-              };
-            }, {} as Macros)}
-          />
-        </View>
+      <List.Section>
+        <List.Subheader style={{ fontSize: 20, fontWeight: 'bold', paddingHorizontal: 0 }}>
+          Nutrition
+        </List.Subheader>
+        <Card mode="outlined" style={{ marginBottom: 16 }}>
+          <MacroSummary macros={totalMacros} />
+        </Card>
         {selectedDateMeals.map(meal => (
           <MealCard
             key={meal.id}
@@ -161,76 +169,66 @@ export default function HistoryTab({ workouts, exercises, historyView, setHistor
             onEdited={() => loadDayData(selectedDate)}
           />
         ))}
-      </View>
+      </List.Section>
     );
   };
 
   const renderDayDetails = () => (
-    <ScrollView style={styles.dayDetails}>
+    <ScrollView style={{ flex: 1, padding: 16 }}>
       {renderWorkouts()}
       {renderNutrition()}
       {selectedDateWorkouts.length === 0 && selectedDateMeals.length === 0 && (
-        <Text style={styles.emptyText}>No activity recorded for this day</Text>
+        <Text
+          variant="bodyLarge"
+          style={{
+            textAlign: 'center',
+            marginTop: 24,
+            opacity: 0.7,
+          }}
+        >
+          No activity recorded for this day
+        </Text>
       )}
     </ScrollView>
   );
 
   return (
-    <View style={styles.container}>
-      <View style={styles.viewToggle}>
-        <TouchableOpacity
-          style={[styles.toggleButton, historyView === 'calendar' && styles.activeToggleButton]}
-          onPress={() => setHistoryView('calendar')}
-        >
-          <Ionicons
-            name="calendar"
-            size={20}
-            color={historyView === 'calendar' ? '#007AFF' : '#666'}
-          />
-          <Text
-            style={[
-              styles.toggleButtonText,
-              historyView === 'calendar' && styles.activeToggleButtonText,
+    <Surface style={{ flex: 1 }}>
+      <Card style={{ elevation: 1 }}>
+        <Card.Content style={{ paddingVertical: 8 }}>
+          <SegmentedButtons
+            value={historyView}
+            onValueChange={(value) => setHistoryView(value as HistoryView)}
+            buttons={[
+              {
+                value: 'calendar',
+                icon: 'calendar',
+                label: 'Calendar',
+              },
+              {
+                value: 'exercises',
+                icon: 'dumbbell',
+                label: 'Exercises',
+              },
             ]}
-          >
-            Calendar
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.toggleButton, historyView === 'exercises' && styles.activeToggleButton]}
-          onPress={() => setHistoryView('exercises')}
-        >
-          <Ionicons
-            name="barbell"
-            size={20}
-            color={historyView === 'exercises' ? '#007AFF' : '#666'}
           />
-          <Text
-            style={[
-              styles.toggleButtonText,
-              historyView === 'exercises' && styles.activeToggleButtonText,
-            ]}
-          >
-            Exercises
-          </Text>
-        </TouchableOpacity>
-      </View>
+        </Card.Content>
+      </Card>
 
       {historyView === 'calendar' ? (
-        <View style={styles.calendarContainer}>
-          <TouchableOpacity
-            style={styles.calendarToggle}
-            onPress={() => setIsCalendarVisible(!isCalendarVisible)}
-          >
-            <Text style={styles.calendarToggleText}>
-              {selectedDate.toLocaleDateString()}
-            </Text>
-            <Ionicons
-              name={isCalendarVisible ? "chevron-up" : "chevron-down"}
-              size={20}
-              color="#007AFF"
+        <Surface style={{ flex: 1 }}>
+          <Card style={{ elevation: 0 }}>
+            <Card.Title
+              title={selectedDate.toLocaleDateString()}
+              right={(props) => (
+                <IconButton
+                  {...props}
+                  icon={isCalendarVisible ? "chevron-up" : "chevron-down"}
+                  onPress={() => setIsCalendarVisible(!isCalendarVisible)}
+                />
+              )}
             />
-          </TouchableOpacity>
+          </Card>
 
           {isCalendarVisible && (
             <Calendar
@@ -241,176 +239,17 @@ export default function HistoryTab({ workouts, exercises, historyView, setHistor
               }}
               markedDates={getMarkedDates()}
               theme={{
-                todayTextColor: '#007AFF',
-                selectedDayBackgroundColor: '#007AFF',
-                dotColor: '#007AFF',
+                todayTextColor: theme.colors.primary,
+                selectedDayBackgroundColor: theme.colors.primary,
+                dotColor: theme.colors.primary,
               }}
             />
           )}
           {renderDayDetails()}
-        </View>
+        </Surface>
       ) : (
         <ExerciseHistoryList workouts={workouts} exercises={exercises} />
       )}
-    </View>
+    </Surface>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
-  viewToggle: {
-    flexDirection: 'row',
-    padding: 8,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-  },
-  toggleButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 8,
-    gap: 8,
-    borderRadius: 8,
-  },
-  activeToggleButton: {
-    backgroundColor: '#f0f9ff',
-  },
-  toggleButtonText: {
-    fontSize: 16,
-    color: '#666',
-  },
-  activeToggleButtonText: {
-    color: '#007AFF',
-    fontWeight: '600',
-  },
-  calendarContainer: {
-    flex: 1,
-  },
-  dayDetails: {
-    flex: 1,
-    padding: 16,
-  },
-  section: {
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 12,
-  },
-  workoutCard: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-  },
-  workoutTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    flex: 1,
-    marginRight: 8,
-  },
-  exerciseItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 4,
-  },
-  exerciseName: {
-    fontSize: 16,
-  },
-  exerciseSets: {
-    fontSize: 14,
-    color: '#666',
-  },
-  emptyText: {
-    textAlign: 'center',
-    color: '#666',
-    fontSize: 16,
-    marginTop: 24,
-  },
-  nutritionSummary: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#007AFF',
-  },
-  mealCard: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-  },
-  mealName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  ingredientsList: {
-    gap: 4,
-  },
-  ingredientItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 2,
-  },
-  ingredientName: {
-    fontSize: 14,
-  },
-  ingredientWeight: {
-    fontSize: 14,
-    color: '#666',
-  },
-  macroSummary: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginTop: 12,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
-  },
-  macroText: {
-    fontSize: 14,
-    color: '#666',
-    backgroundColor: '#f5f5f5',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-  },
-  calendarToggle: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-  },
-  calendarToggleText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#007AFF',
-  },
-  workoutHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  deleteButton: {
-    padding: 4,
-  },
-});

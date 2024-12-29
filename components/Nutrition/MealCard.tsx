@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Alert } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { View, StyleSheet, Image, Alert } from 'react-native';
+import { Card, Text, IconButton, Chip, Button, useTheme, Portal } from 'react-native-paper';
 import { MealEntry, Ingredient, Macros } from '../../types/index';
 import { nutritionService } from '../../services/nutritionService';
 import AddMealModal from './AddMealModal';
@@ -17,6 +17,8 @@ interface Props {
 }
 
 const MacroSummary: React.FC<{ macros: Macros }> = ({ macros }) => {
+  const theme = useTheme();
+
   if (!macros.calories && !macros.protein && !macros.carbs && !macros.fat) {
     return null;
   }
@@ -24,16 +26,24 @@ const MacroSummary: React.FC<{ macros: Macros }> = ({ macros }) => {
   return (
     <View style={styles.macroSummary}>
       {macros.calories !== undefined && (
-        <Text style={styles.macroText}>{Math.round(macros.calories)} kcal</Text>
+        <Chip mode="outlined" style={styles.macroChip}>
+          {Math.round(macros.calories)} kcal
+        </Chip>
       )}
       {macros.protein !== undefined && (
-        <Text style={styles.macroText}>{Math.round(macros.protein)}g protein</Text>
+        <Chip mode="outlined" style={styles.macroChip}>
+          {Math.round(macros.protein)}g protein
+        </Chip>
       )}
       {macros.carbs !== undefined && (
-        <Text style={styles.macroText}>{Math.round(macros.carbs)}g carbs</Text>
+        <Chip mode="outlined" style={styles.macroChip}>
+          {Math.round(macros.carbs)}g carbs
+        </Chip>
       )}
       {macros.fat !== undefined && (
-        <Text style={styles.macroText}>{Math.round(macros.fat)}g fat</Text>
+        <Chip mode="outlined" style={styles.macroChip}>
+          {Math.round(macros.fat)}g fat
+        </Chip>
       )}
     </View>
   );
@@ -50,8 +60,10 @@ export default function MealCard({
   onEdited,
 }: Props) {
   const [showEditModal, setShowEditModal] = useState(false);
+  const theme = useTheme();
 
   const handleDelete = () => {
+    // Using the native Alert for now as Paper's Dialog would need more setup
     Alert.alert(
       'Delete Meal',
       'Are you sure you want to delete this meal?',
@@ -104,123 +116,145 @@ export default function MealCard({
 
   const CardContent = () => (
     <>
-      <View style={styles.mealHeader}>
-        <View style={styles.mealInfo}>
-          <Text style={styles.mealName}>{meal.name}</Text>
+      <Card.Title
+        title={meal.name}
+        right={(props) => (
           <View style={styles.actions}>
-            <TouchableOpacity onPress={handleEdit} style={styles.actionButton}>
-              <Ionicons name="pencil" size={20} color="#007AFF" />
-            </TouchableOpacity>
-            <TouchableOpacity onPress={handleDelete} style={styles.actionButton}>
-              <Ionicons name="trash-outline" size={20} color="#FF3B30" />
-            </TouchableOpacity>
+            <IconButton
+              {...props}
+              icon="pencil"
+              onPress={handleEdit}
+            />
+            <IconButton
+              {...props}
+              icon="trash-can-outline"
+              iconColor={theme.colors.error}
+              onPress={handleDelete}
+            />
           </View>
-        </View>
-      </View>
+        )}
+      />
 
       {showImage && meal.imageUri && (
-        <View style={compact ? styles.imageContainerCompact : styles.imageContainer}>
-          <Image
-            source={{ uri: meal.imageUri }}
-            style={styles.mealImage}
-            resizeMode="cover"
-          />
+        <Card.Cover
+          source={{ uri: meal.imageUri }}
+          style={compact ? styles.imageCompact : styles.image}
+        />
+      )}
+
+      <Card.Content>
+        <View style={styles.ingredientsList}>
+          {meal.ingredients.map((ing, index) => (
+            <View key={`${ing.name}-${index}`} style={styles.ingredientItem}>
+              <Text variant="bodyLarge">{ing.name}</Text>
+              <Text variant="bodyMedium" style={styles.ingredientWeight}>
+                {ing.weight}g
+              </Text>
+            </View>
+          ))}
         </View>
-      )}
 
-      <View style={styles.ingredientsList}>
-        {meal.ingredients.map((ing, index) => (
-          <View key={`${ing.name}-${index}`} style={styles.ingredientItem}>
-            <Text style={styles.ingredientName}>{ing.name}</Text>
-            <Text style={styles.ingredientWeight}>{ing.weight}g</Text>
-          </View>
-        ))}
-      </View>
+        {showMacros && <MacroSummary macros={macros} />}
 
-      {showMacros && <MacroSummary macros={macros} />}
-
-      {showNotes && meal.notes && (
-        <Text style={styles.mealNotes}>{meal.notes}</Text>
-      )}
-
-      <AddMealModal
-        visible={showEditModal}
-        onClose={() => setShowEditModal(false)}
-        onSave={handleSaveEdit}
-        initialMeal={{
-          name: meal.name,
-          ingredients: meal.ingredients,
-          notes: meal.notes,
-          imageUri: meal.imageUri,
-        }}
-      />
+        {showNotes && meal.notes && (
+          <Text variant="bodyMedium" style={styles.notes}>
+            {meal.notes}
+          </Text>
+        )}
+      </Card.Content>
     </>
   );
 
-  if (onPress) {
-    return (
-      <TouchableOpacity style={styles.mealCard} onPress={onPress}>
-        <CardContent />
-      </TouchableOpacity>
-    );
-  }
+  const cardProps = {
+    style: styles.card,
+    onPress: onPress,
+    mode: 'elevated' as const,
+  };
 
   return (
-    <View style={styles.mealCard}>
-      <CardContent />
-    </View>
+    <>
+      <Card {...cardProps}>
+        <Card.Title
+          title={meal.name}
+          right={(props) => (
+            <View style={styles.actions}>
+              <IconButton
+                {...props}
+                icon="pencil"
+                onPress={handleEdit}
+              />
+              <IconButton
+                {...props}
+                icon="trash-can-outline"
+                iconColor={theme.colors.error}
+                onPress={handleDelete}
+              />
+            </View>
+          )}
+        />
+
+        {showImage && meal.imageUri && (
+          <Card.Cover
+            source={{ uri: meal.imageUri }}
+            style={compact ? styles.imageCompact : styles.image}
+          />
+        )}
+
+        <Card.Content>
+          <View style={styles.ingredientsList}>
+            {meal.ingredients.map((ing, index) => (
+              <View key={`${ing.name}-${index}`} style={styles.ingredientItem}>
+                <Text variant="bodyLarge">{ing.name}</Text>
+                <Text variant="bodyMedium" style={styles.ingredientWeight}>
+                  {ing.weight}g
+                </Text>
+              </View>
+            ))}
+          </View>
+
+          {showMacros && <MacroSummary macros={macros} />}
+
+          {showNotes && meal.notes && (
+            <Text variant="bodyMedium" style={styles.notes}>
+              {meal.notes}
+            </Text>
+          )}
+        </Card.Content>
+      </Card>
+
+      <Portal>
+        <AddMealModal
+          visible={showEditModal}
+          onClose={() => setShowEditModal(false)}
+          onSave={handleSaveEdit}
+          initialMeal={{
+            name: meal.name,
+            ingredients: meal.ingredients,
+            notes: meal.notes,
+            imageUri: meal.imageUri,
+          }}
+        />
+      </Portal>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  mealCard: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-  },
-  mealHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  card: {
     marginBottom: 12,
   },
-  mealInfo: {
-    flex: 1,
+  actions: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
   },
-  mealName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  imageContainer: {
-    width: '100%',
+  image: {
     height: 200,
-    marginBottom: 12,
-    borderRadius: 8,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
   },
-  imageContainerCompact: {
-    width: '100%',
+  imageCompact: {
     height: 120,
-    marginBottom: 12,
-    borderRadius: 8,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-  },
-  mealImage: {
-    width: '100%',
-    height: '100%',
   },
   ingredientsList: {
     gap: 8,
+    marginTop: 8,
   },
   ingredientItem: {
     flexDirection: 'row',
@@ -228,41 +262,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 4,
   },
-  ingredientName: {
-    fontSize: 16,
-  },
   ingredientWeight: {
-    fontSize: 16,
-    color: '#666',
+    opacity: 0.7,
   },
   macroSummary: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
-    marginTop: 12,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(0, 0, 0, 0.12)',
   },
-  macroText: {
-    fontSize: 14,
-    color: '#666',
-    backgroundColor: '#f5f5f5',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
+  macroChip: {
+    marginRight: 4,
+    marginBottom: 4,
   },
-  mealNotes: {
-    marginTop: 12,
-    fontSize: 14,
-    color: '#666',
+  notes: {
+    marginTop: 16,
     fontStyle: 'italic',
-  },
-  actions: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  actionButton: {
-    padding: 4,
+    opacity: 0.7,
   },
 });

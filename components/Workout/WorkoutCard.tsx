@@ -1,6 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { View, StyleSheet, Alert } from 'react-native';
+import { Card, Text, IconButton, useTheme, List } from 'react-native-paper';
 import { Workout, WorkoutExercise } from '../../types/index';
 import { workoutService } from '@/services/workoutService';
 
@@ -21,6 +21,8 @@ export default function WorkoutCard({
   onDeleted,
   onEdited,
 }: Props) {
+  const theme = useTheme();
+
   const handleDelete = () => {
     Alert.alert(
       'Delete Workout',
@@ -46,89 +48,57 @@ export default function WorkoutCard({
 
   const CardContent = () => (
     <>
-      <View style={styles.workoutHeader}>
-        <View>
-          <Text style={styles.workoutTitle}>
-            {workout.name || `Workout on ${new Date(workout.date).toLocaleDateString()}`}
-          </Text>
-          <Text style={styles.workoutSubtitle}>
-            {workout.exercises.length} exercises
-          </Text>
-        </View>
-        {showActions && (
-          <TouchableOpacity
-            onPress={handleDelete}
-            style={styles.deleteButton}
-          >
-            <Ionicons name="trash-outline" size={20} color="#FF3B30" />
-          </TouchableOpacity>
+      <Card.Title
+        title={workout.name || `Workout on ${new Date(workout.date).toLocaleDateString()}`}
+        subtitle={`${workout.exercises.length} exercises`}
+        right={(props) => (
+          showActions && (
+            <IconButton
+              {...props}
+              icon="trash-can-outline"
+              iconColor={theme.colors.error}
+              onPress={handleDelete}
+            />
+          )
         )}
-      </View>
+      />
 
-      {!compact && workout.exercises.map((exercise: WorkoutExercise) => (
-        <View key={exercise.exercise.id} style={styles.exerciseItem}>
-          <Text style={styles.exerciseName}>{exercise.exercise.name}</Text>
-          <Text style={styles.exerciseSets}>
-            {exercise.sets.length} {exercise.sets.length === 1 ? 'set' : 'sets'}
-          </Text>
-        </View>
-      ))}
+      {!compact && (
+        <Card.Content>
+          <List.Section>
+            {workout.exercises.map((exercise: WorkoutExercise) => (
+              <List.Item
+                key={exercise.exercise.id}
+                title={exercise.exercise.name}
+                description={`${exercise.sets[0]?.weight || 0}kg x ${exercise.sets[0]?.reps || 0}`}
+                left={props => <List.Icon {...props} icon="dumbbell" />}
+              />
+            ))}
+          </List.Section>
+        </Card.Content>
+      )}
     </>
   );
 
-  if (onPress) {
-    return (
-      <TouchableOpacity style={styles.workoutCard} onPress={onPress}>
-        <CardContent />
-      </TouchableOpacity>
-    );
-  }
+  const cardProps = {
+    style: styles.card,
+    onPress: onPress,
+    mode: 'elevated' as const,
+  };
 
-  return (
-    <View style={styles.workoutCard}>
+  return onPress ? (
+    <Card {...cardProps}>
       <CardContent />
-    </View>
+    </Card>
+  ) : (
+    <Card {...cardProps}>
+      <CardContent />
+    </Card>
   );
 }
 
 const styles = StyleSheet.create({
-  workoutCard: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 16,
+  card: {
     marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-  },
-  workoutHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  workoutTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  workoutSubtitle: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 4,
-  },
-  deleteButton: {
-    padding: 4,
-  },
-  exerciseItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 4,
-  },
-  exerciseName: {
-    fontSize: 16,
-  },
-  exerciseSets: {
-    fontSize: 14,
-    color: '#666',
   },
 });
