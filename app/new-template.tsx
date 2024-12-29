@@ -20,6 +20,8 @@ import { exerciseService } from '../services/exerciseService';
 import { templateService } from '../services/templateService';
 import AddExerciseModal from '../components/Workout/AddExerciseModal';
 import { useFocusEffect } from '@react-navigation/native';
+import { StatusBar } from 'expo-status-bar';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function NewTemplateScreen() {
   const theme = useTheme();
@@ -142,9 +144,18 @@ export default function NewTemplateScreen() {
   };
 
   return (
+    <SafeAreaView style={{ flex: 1 }} edges={['left', 'right']}>
+      <StatusBar style={theme.colors.background === 'dark' ? 'light' : 'dark'} />
     <Surface style={{ flex: 1 }}>
-      <Card style={{ elevation: 0 }}>
+      <Card style={{ elevation: 0, marginTop: 16 }}>
         <Card.Title
+          left={(props) => (
+            <IconButton
+              {...props}
+              icon="arrow-left"
+              onPress={() => router.back()}
+            />
+          )}
           title={templateId ? 'Edit Template' : 'Create New Template'}
           right={(props) =>
             templateId ? (
@@ -282,5 +293,6 @@ export default function NewTemplateScreen() {
         onExerciseAdded={handleExerciseAdded}
       />
     </Surface>
+    </SafeAreaView>
   );
 }

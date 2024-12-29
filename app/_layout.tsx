@@ -3,12 +3,10 @@ import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useColorScheme } from 'react-native';
+import { useColorScheme, Platform } from 'react-native';
 import { useEffect } from 'react';
-import {DefaultTheme, PaperProvider} from 'react-native-paper';
-
-
-
+import { DefaultTheme, PaperProvider } from 'react-native-paper';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -30,12 +28,20 @@ export default function RootLayout() {
   }
 
   return (
-    <PaperProvider theme={DefaultTheme}>
-        <Stack>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="+not-found" options={{ headerShown: false }} />
+    <SafeAreaProvider>
+      <PaperProvider theme={DefaultTheme}>
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            contentStyle: {
+              backgroundColor: DefaultTheme.colors.background,
+            },
+          }}
+        >
+          <Stack.Screen name="index" />
+          <Stack.Screen name="+not-found" />
         </Stack>
-        <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
-    </PaperProvider>
+      </PaperProvider>
+    </SafeAreaProvider>
   );
 }

@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { ScrollView } from 'react-native';
 import { router } from 'expo-router';
-import { Surface, Text, Card, Button, useTheme } from 'react-native-paper';
+import { Surface, Text, Card, Button, useTheme, IconButton } from 'react-native-paper';
 import { WorkoutTemplate, Exercise } from '../types/index';
 import { templateService } from '../services/templateService';
 import { exerciseService } from '../services/exerciseService';
+import { StatusBar } from 'expo-status-bar';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function NewWorkoutScreen() {
   const theme = useTheme();
@@ -57,10 +59,21 @@ export default function NewWorkoutScreen() {
   );
 
   return (
-    <Surface style={{ flex: 1 }}>
-      <Card style={{ elevation: 1 }}>
-        <Card.Title title="Start New Workout" titleVariant="headlineMedium" />
-      </Card>
+    <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
+      <StatusBar style={theme.colors.background === 'dark' ? 'light' : 'dark'} />
+      <Surface style={{ flex: 1 }}>
+        <Card style={{ elevation: 0, marginTop: 16 }}>
+          <Card.Title
+            left={(props) => (
+              <IconButton
+                {...props}
+                icon="arrow-left"
+                onPress={() => router.back()}
+              />
+            )}
+            title="Start New Workout"
+          />
+        </Card>
 
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16 }}>
         <Card mode="contained" style={{ marginBottom: 24 }}>
@@ -111,5 +124,6 @@ export default function NewWorkoutScreen() {
         )}
       </ScrollView>
     </Surface>
+    </SafeAreaView>
   );
 }

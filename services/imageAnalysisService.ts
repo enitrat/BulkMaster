@@ -18,6 +18,25 @@ interface AnalyzedIngredient {
   macros: Macros;
 }
 
+const systemMessage = `You are a nutrition expert. Analyze the food image and return a JSON object
+with the meal name and an array of aliments composing the meal with their estimated weights and
+macronutrients.  example: For a quiche with salad, the two ingredients are "quiche" and "salad". Put
+emphasis on estimating the right weight, using context elements to determine the aliment size.
+Format:
+{
+  "name": "meal name",
+  "ingredients": [{
+    "name": "ingredient name",
+    "weight": estimated_weight_in_grams,
+    "macros": {
+      "calories": calories_for_weight_in_grams,
+      "protein": protein_for_weight_in_grams,
+      "carbs": carbs_for_weight_in_grams,
+      "fat": fat_for_weight_in_grams
+    }
+  }]
+}`;
+
 export const imageAnalysisService = {
   analyzeFood: async (imageUri: string): Promise<AnalyzedMeal> => {
     try {
@@ -27,21 +46,6 @@ export const imageAnalysisService = {
       });
 
       // Prepare the system message to get structured data
-      const systemMessage = `You are a nutrition expert. Analyze the food image and return a JSON object with the meal name and an array of ingredients with their estimated weights and macronutrients. Format:
-      {
-        "name": "meal name",
-        "ingredients": [{
-          "name": "ingredient name",
-          "weight": estimated_weight_in_grams,
-          "macros": {
-            "calories": calories_for_weight_in_grams,
-            "protein": protein_for_weight_in_grams,
-            "carbs": carbs_for_weight_in_grams,
-            "fat": fat_for_weight_in_grams
-          }
-        }]
-      }`;
-
       const response = await openai.chat.completions.create({
         model: "gpt-4o",
         messages: [
@@ -97,20 +101,6 @@ export const imageAnalysisService = {
         encoding: FileSystem.EncodingType.Base64,
       });
 
-      const systemMessage = `You are a nutrition expert. Analyze the food image and return a JSON object with the meal name and an array of ingredients with their estimated weights and macronutrients. Format:
-      {
-        "name": "meal name",
-        "ingredients": [{
-          "name": "ingredient name",
-          "weight": estimated_weight_in_grams,
-          "macros": {
-            "calories": calories_for_weight_in_grams,
-            "protein": protein_for_weight_in_grams,
-            "carbs": carbs_for_weight_in_grams,
-            "fat": fat_for_weight_in_grams
-          }
-        }]
-      }`;
 
       const response = await openai.chat.completions.create({
         model: "gpt-4o",

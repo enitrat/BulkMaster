@@ -48,36 +48,34 @@ const ReviewScreen: React.FC<ReviewScreenProps> = ({
 
     setIsAnalyzing(true);
     try {
-      const currentAnalysisJson = JSON.stringify({
-        name: analysis.name,
-        ingredients: analysis.ingredients.map((ing: Ingredient) => ({
-          name: ing.name,
-          weight: ing.weight,
-          macros: ing.macros
-        }))
-      }, null, 2);
-
-      const fullFeedback = `Current analysis:\n${currentAnalysisJson}\n\nUser feedback: ${feedback}`;
-
       const analyzedMeal = await imageAnalysisService.analyzeFoodWithFeedback(
         imageUri,
-        fullFeedback
+        feedback
       );
+
+      // Create a new meal entry with the analyzed data
       const mealEntry: MealEntry = {
         id: analysis.id,
         name: analyzedMeal.name,
         date: analysis.date,
         ingredients: analyzedMeal.ingredients,
-        notes: analysis.notes
+        notes: analysis.notes,
+        imageUri: analysis.imageUri
       };
+
       setAnalysis(mealEntry);
       setFeedback('');
-      ToastAndroid.show('Analysis updated based on feedback', ToastAndroid.SHORT);
+
+      if (Platform.OS === 'android') {
+        ToastAndroid.show('Analysis updated based on feedback', ToastAndroid.SHORT);
+      } else {
+        Alert.alert('Success', 'Analysis updated based on feedback');
+      }
     } catch (error) {
       console.error('Error analyzing with feedback:', error);
-      ToastAndroid.show(
-        error instanceof Error ? error.message : 'Failed to update analysis',
-        ToastAndroid.SHORT
+      Alert.alert(
+        'Analysis Error',
+        error instanceof Error ? error.message : 'Failed to update analysis'
       );
     } finally {
       setIsAnalyzing(false);

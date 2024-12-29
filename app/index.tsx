@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Alert } from 'react-native';
+import { View, Alert, StatusBar as RNStatusBar } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Surface, useTheme, Appbar, BottomNavigation, Text } from 'react-native-paper';
 import { WorkoutTemplate, Workout, Exercise, HistoryView } from '../types/index';
@@ -10,6 +10,8 @@ import TodayTab from '../components/Tabs/TodayTab';
 import WorkoutsTab from '../components/Tabs/WorkoutsTab';
 import NutritionTab from '../components/Tabs/NutritionTab';
 import HistoryTab from '../components/Tabs/HistoryTab';
+import { StatusBar } from 'expo-status-bar';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function HomeScreen() {
   const theme = useTheme();
@@ -88,23 +90,38 @@ export default function HomeScreen() {
   });
 
   return (
-    <Surface style={{ flex: 1 }}>
-      <BottomNavigation
-        navigationState={{ index, routes }}
-        onIndexChange={setIndex}
-        renderScene={renderScene}
-        sceneAnimationType="shifting"
-        sceneAnimationEnabled={true}
-        compact={false}
-        safeAreaInsets={{ bottom: 0 }}
-        theme={{
-          ...theme,
-          colors: {
-            ...theme.colors,
-            secondaryContainer: 'transparent',
-          },
-        }}
-      />
-    </Surface>
+    <SafeAreaView style={{ flex: 1 }} edges={['left', 'right']}>
+      <StatusBar style={theme.colors.background === 'dark' ? 'light' : 'dark'} />
+      <Surface style={{ flex: 1 }}>
+        <View style={{ height: RNStatusBar.currentHeight }} />
+        <BottomNavigation
+          navigationState={{ index, routes }}
+          onIndexChange={setIndex}
+          renderScene={renderScene}
+          sceneAnimationType="shifting"
+          sceneAnimationEnabled={true}
+          compact={false}
+          safeAreaInsets={{ bottom: 0 }}
+          activeColor={theme.colors.primary}
+          barStyle={{
+            backgroundColor: theme.colors.elevation.level2,
+            borderTopWidth: 1,
+            borderTopColor: theme.colors.surfaceVariant,
+          }}
+          activeIndicatorStyle={{
+            backgroundColor: theme.colors.primaryContainer,
+            height: 32,
+            marginVertical: 4,
+          }}
+          theme={{
+            ...theme,
+            colors: {
+              ...theme.colors,
+              secondaryContainer: 'transparent',
+            },
+          }}
+        />
+      </Surface>
+    </SafeAreaView>
   );
 }

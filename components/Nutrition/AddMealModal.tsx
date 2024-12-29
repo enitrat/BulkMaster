@@ -90,8 +90,7 @@ export default function AddMealModal({ visible, onClose, onSave, initialMeal }: 
     margin: 16,
     borderRadius: theme.roundness,
     height: '90%' as const,
-    overflow: 'hidden' as const,
-  };
+  } as const;
 
   const renderIngredientSection = () => {
     if (ingredients.length === 0) {
@@ -122,7 +121,7 @@ export default function AddMealModal({ visible, onClose, onSave, initialMeal }: 
   return (
     <>
       <Modal visible={visible} onDismiss={onClose} contentContainerStyle={containerStyle}>
-        <Card style={{ flex: 1 }}>
+        <View style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
           <Card.Title
             title={initialMeal ? 'Edit Meal' : 'Add Meal'}
             right={(props) => (
@@ -136,69 +135,72 @@ export default function AddMealModal({ visible, onClose, onSave, initialMeal }: 
             )}
           />
 
-          <Card.Content>
-            <ScrollView showsVerticalScrollIndicator={false}>
-              <List.Section>
-                <List.Subheader>Basic Information</List.Subheader>
-                <TextInput
-                  label="Meal Name *"
+          <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: 24 }}>
+            <List.Section>
+              <List.Subheader>Basic Information</List.Subheader>
+              <TextInput
+                label="Meal Name *"
+                mode="outlined"
+                value={name}
+                onChangeText={setName}
+                placeholder="Enter meal name"
+              />
+            </List.Section>
+
+            <Divider />
+
+            <List.Section>
+              <List.Subheader>Ingredients *</List.Subheader>
+              {renderIngredientSection()}
+
+              <View style={{ flexDirection: 'row', gap: 8, marginTop: 16 }}>
+                <Button
+                  mode="contained"
+                  onPress={() => setShowCamera(true)}
+                  icon="camera"
+                  style={{ flex: 1 }}
+                >
+                  Take Photo
+                </Button>
+
+                <Button
                   mode="outlined"
-                  value={name}
-                  onChangeText={setName}
-                  placeholder="Enter meal name"
-                />
-              </List.Section>
+                  onPress={() => setShowIngredientForm(true)}
+                  icon="plus"
+                  style={{ flex: 1 }}
+                >
+                  Add Manually
+                </Button>
+              </View>
+            </List.Section>
 
-              <Divider />
+            <Divider />
 
-              <List.Section>
-                <List.Subheader>Ingredients *</List.Subheader>
-                {renderIngredientSection()}
+            <List.Section>
+              <List.Subheader>Additional Information</List.Subheader>
+              <TextInput
+                label="Notes (optional)"
+                mode="outlined"
+                value={notes}
+                onChangeText={setNotes}
+                placeholder="Add any notes"
+                multiline
+                numberOfLines={4}
+              />
+            </List.Section>
+          </ScrollView>
 
-                <View style={{ flexDirection: 'row', gap: 8, marginTop: 16 }}>
-                  <Button
-                    mode="contained"
-                    onPress={() => setShowCamera(true)}
-                    icon="camera"
-                    style={{ flex: 1 }}
-                  >
-                    Take Photo
-                  </Button>
-
-                  <Button
-                    mode="outlined"
-                    onPress={() => setShowIngredientForm(true)}
-                    icon="plus"
-                    style={{ flex: 1 }}
-                  >
-                    Add Manually
-                  </Button>
-                </View>
-              </List.Section>
-
-              <Divider />
-
-              <List.Section>
-                <List.Subheader>Additional Information</List.Subheader>
-                <TextInput
-                  label="Notes (optional)"
-                  mode="outlined"
-                  value={notes}
-                  onChangeText={setNotes}
-                  placeholder="Add any notes"
-                  multiline
-                  numberOfLines={4}
-                />
-              </List.Section>
-            </ScrollView>
-          </Card.Content>
-
-          <Card.Actions style={{ justifyContent: 'flex-end', padding: 16 }}>
-            <Button mode="contained" onPress={handleSave}>
+          <Card.Actions style={{
+            padding: 16,
+            borderTopWidth: 1,
+            borderTopColor: theme.colors.surfaceVariant,
+            backgroundColor: theme.colors.surface,
+          }}>
+            <Button mode="contained" onPress={handleSave} style={{ flex: 1 }}>
               {initialMeal ? 'Save Changes' : 'Save Meal'}
             </Button>
           </Card.Actions>
-        </Card>
+        </View>
 
         {showCamera && (
           <FoodImageCapture

@@ -24,6 +24,8 @@ import { templateService } from '../services/templateService';
 import { exerciseService } from '../services/exerciseService';
 import RestTimer from '@/components/Workout/RestTimer';
 import { useFocusEffect } from '@react-navigation/native';
+import { StatusBar } from 'expo-status-bar';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 type SetModalProps = {
   visible: boolean;
@@ -289,6 +291,8 @@ export default function WorkoutInProgressScreen() {
   }
 
   return (
+    <SafeAreaView style={{ flex: 1 }} edges={['left', 'right']}>
+      <StatusBar style={theme.colors.background === 'dark' ? 'light' : 'dark'} />
     <Surface style={{ flex: 1 }}>
       <Appbar.Header>
         <Appbar.Content title="Workout in Progress" />
@@ -336,5 +340,6 @@ export default function WorkoutInProgressScreen() {
         title="Edit Exercise"
       />
     </Surface>
+    </SafeAreaView>
   );
 }
