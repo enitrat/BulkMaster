@@ -1,21 +1,22 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, Alert } from 'react-native';
 import { Link, router } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import { WorkoutTemplate, Workout, Exercise } from '../types';
+import { WorkoutTemplate, Workout, Exercise, HistoryView } from '../types/index';
 import { templateService } from '../services/templateService';
 import { exerciseService } from '../services/exerciseService';
 import { workoutService } from '../services/workoutService';
 import HistoryTab from '../components/HistoryTab';
+import NutritionTab from '../components/NutritionTab';
 
-type HistoryView = 'calendar' | 'exercises';
+type MainTab = 'workouts' | 'nutrition' | 'history';
 
 export default function HomeScreen() {
   const [templates, setTemplates] = useState<WorkoutTemplate[]>([]);
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [activeWorkout, setActiveWorkout] = useState<Workout | null>(null);
-  const [activeTab, setActiveTab] = useState<'templates' | 'history'>('templates');
+  const [activeTab, setActiveTab] = useState<MainTab>('workouts');
   const [historyView, setHistoryView] = useState<HistoryView>('calendar');
   const [exercises, setExercises] = useState<Exercise[]>([]);
 
@@ -29,22 +30,35 @@ export default function HomeScreen() {
     setExercises(allExercises);
   };
 
-  useFocusEffect(
-    React.useCallback(() => {
-      loadData();
-    }, [])
-  );
+  const loadData = useCallback(async () => {
+    try {
+      const [
+        loadedTemplates,
+        loadedWorkouts,
+        loadedExercises,
+        loadedActiveWorkout
+      ] = await Promise.all([
+        templateService.getAllTemplates(),
+        workoutService.getAllWorkouts(),
+        exerciseService.getAllExercises(),
+        workoutService.getActiveWorkout()
+      ]);
 
-  const loadData = async () => {
-    const [loadedTemplates, loadedWorkouts, currentWorkout] = await Promise.all([
-      templateService.getAllTemplates(),
-      workoutService.getAllWorkouts(),
-      workoutService.getActiveWorkout(),
-    ]);
-    setTemplates(loadedTemplates);
-    setWorkouts(loadedWorkouts.sort((a, b) => b.date.getTime() - a.date.getTime()));
-    setActiveWorkout(currentWorkout);
-  };
+      setTemplates(loadedTemplates);
+      setWorkouts(loadedWorkouts);
+      setExercises(loadedExercises);
+      setActiveWorkout(loadedActiveWorkout);
+    } catch (error) {
+      console.error('Error loading data:', error);
+      Alert.alert('Error', 'Failed to load data');
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+    }, [loadData])
+  );
 
   const handleCancelWorkout = () => {
     Alert.alert(
@@ -109,21 +123,8 @@ export default function HomeScreen() {
     </TouchableOpacity>
   );
 
-  const renderHistoryTab = () => (
-    <HistoryTab
-      workouts={workouts}
-      exercises={exercises}
-      historyView={historyView}
-      setHistoryView={setHistoryView}
-    />
-  );
-
-  return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>BulkMaster</Text>
-      </View>
-
+  const renderWorkoutsTab = () => (
+    <View style={styles.content}>
       {activeWorkout ? (
         <View style={styles.activeWorkoutContainer}>
           <View style={styles.activeWorkoutInfo}>
@@ -148,23 +149,61 @@ export default function HomeScreen() {
           </View>
         </View>
       ) : (
-        <View style={styles.mainActionContainer}>
-          <TouchableOpacity
-            style={[styles.button, styles.primaryButton]}
-            onPress={() => router.push('/new-workout')}
-          >
-            <Text style={styles.buttonText}>Start New Workout</Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity
+          style={[styles.button, styles.primaryButton]}
+          onPress={() => router.push('/new-workout')}
+        >
+          <Text style={styles.buttonText}>Start New Workout</Text>
+        </TouchableOpacity>
       )}
+
+      <TouchableOpacity
+        style={styles.addTemplateButton}
+        onPress={() => router.push('/new-template')}
+      >
+        <Ionicons name="add-circle-outline" size={24} color="#007AFF" />
+        <Text style={styles.addTemplateText}>Create New Template</Text>
+      </TouchableOpacity>
+
+      <Text style={styles.sectionTitle}>Your Templates</Text>
+      <FlatList
+        data={templates}
+        renderItem={renderTemplate}
+        keyExtractor={(item) => item.id}
+        ListEmptyComponent={
+          <Text style={styles.emptyText}>
+            No templates yet. Create one to get started!
+          </Text>
+        }
+      />
+    </View>
+  );
+
+  const renderNutritionTab = () => (
+    <NutritionTab />
+  );
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.title}>BulkMaster</Text>
+      </View>
 
       <View style={styles.tabContainer}>
         <TouchableOpacity
-          style={[styles.tab, activeTab === 'templates' && styles.activeTab]}
-          onPress={() => setActiveTab('templates')}
+          style={[styles.tab, activeTab === 'workouts' && styles.activeTab]}
+          onPress={() => setActiveTab('workouts')}
         >
-          <Text style={[styles.tabText, activeTab === 'templates' && styles.activeTabText]}>
-            Templates
+          <Text style={[styles.tabText, activeTab === 'workouts' && styles.activeTabText]}>
+            Workouts
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'nutrition' && styles.activeTab]}
+          onPress={() => setActiveTab('nutrition')}
+        >
+          <Text style={[styles.tabText, activeTab === 'nutrition' && styles.activeTabText]}>
+            Nutrition
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -177,28 +216,15 @@ export default function HomeScreen() {
         </TouchableOpacity>
       </View>
 
-      {activeTab === 'templates' ? (
-        <View style={styles.content}>
-          <TouchableOpacity
-            style={styles.addTemplateButton}
-            onPress={() => router.push('/new-template')}
-          >
-            <Ionicons name="add-circle-outline" size={24} color="#007AFF" />
-            <Text style={styles.addTemplateText}>Create New Template</Text>
-          </TouchableOpacity>
-          <FlatList
-            data={templates}
-            renderItem={renderTemplate}
-            keyExtractor={(item) => item.id}
-            ListEmptyComponent={
-              <Text style={styles.emptyText}>
-                No templates yet. Create one to get started!
-              </Text>
-            }
-          />
-        </View>
-      ) : (
-        renderHistoryTab()
+      {activeTab === 'workouts' && renderWorkoutsTab()}
+      {activeTab === 'nutrition' && renderNutritionTab()}
+      {activeTab === 'history' && (
+        <HistoryTab
+          workouts={workouts}
+          exercises={exercises}
+          historyView={historyView}
+          setHistoryView={setHistoryView}
+        />
       )}
     </View>
   );
@@ -218,63 +244,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-  },
-  mainActionContainer: {
-    padding: 16,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  activeWorkoutContainer: {
-    margin: 16,
-    padding: 16,
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#007AFF',
-  },
-  activeWorkoutInfo: {
-    marginBottom: 12,
-  },
-  activeWorkoutTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#007AFF',
-  },
-  activeWorkoutSubtitle: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 4,
-  },
-  activeWorkoutActions: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  button: {
-    padding: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-    flex: 1,
-  },
-  primaryButton: {
-    backgroundColor: '#007AFF',
-  },
-  continueButton: {
-    backgroundColor: '#007AFF',
-    flex: 2,
-  },
-  cancelButton: {
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#FF3B30',
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  cancelButtonText: {
-    color: '#FF3B30',
   },
   tabContainer: {
     flexDirection: 'row',
@@ -303,6 +272,65 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     padding: 16,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginTop: 24,
+    marginBottom: 16,
+  },
+  activeWorkoutContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#007AFF',
+  },
+  activeWorkoutInfo: {
+    marginBottom: 12,
+  },
+  activeWorkoutTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#007AFF',
+  },
+  activeWorkoutSubtitle: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 4,
+  },
+  activeWorkoutActions: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  button: {
+    padding: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  primaryButton: {
+    backgroundColor: '#007AFF',
+    marginBottom: 16,
+  },
+  continueButton: {
+    backgroundColor: '#007AFF',
+    flex: 2,
+  },
+  cancelButton: {
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#FF3B30',
+    flex: 1,
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  cancelButtonText: {
+    color: '#FF3B30',
   },
   addTemplateButton: {
     flexDirection: 'row',
@@ -350,5 +378,17 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: '#666',
     fontSize: 16,
+    marginTop: 24,
+  },
+  emptyTabContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 16,
+  },
+  emptyTabText: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
   },
 });

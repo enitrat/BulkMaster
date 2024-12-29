@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { WorkoutTemplate, Exercise } from '../types';
+import { WorkoutTemplate, Exercise } from '../types/index';
 import uuid from 'react-native-uuid';
 
 const STORAGE_KEYS = {

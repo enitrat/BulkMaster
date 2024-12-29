@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Exercise, ExerciseCategory } from '../types';
+import { Exercise, ExerciseCategory } from '../types/index';
 import uuid from 'react-native-uuid';
 
 const STORAGE_KEYS = {

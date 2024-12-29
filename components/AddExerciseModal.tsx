@@ -10,7 +10,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Exercise, ExerciseCategory } from '../types';
+import { Exercise, ExerciseCategory } from '../types/index';
 import { exerciseService } from '../services/exerciseService';
 
 type AddExerciseModalProps = {

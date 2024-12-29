@@ -8,7 +8,7 @@ import {
   Alert,
 } from 'react-native';
 import { router } from 'expo-router';
-import { WorkoutTemplate, Exercise } from '../types';
+import { WorkoutTemplate, Exercise } from '../types/index';
 import { templateService } from '../services/templateService';
 import { exerciseService } from '../services/exerciseService';
 

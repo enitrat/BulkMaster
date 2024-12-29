@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Dimensions, TouchableOpacity } from 'react-nati
 import { CartesianChart, Line, Scatter } from 'victory-native';
 import { useFont } from '@shopify/react-native-skia';
 import { Ionicons } from '@expo/vector-icons';
-import { Workout, Exercise } from '../types';
+import { Workout, Exercise } from '../types/index';
 
 type ExerciseHistoryProps = {
   exercise: Exercise;

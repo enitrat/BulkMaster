@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import uuid from 'react-native-uuid';
-import { Workout, WorkoutTemplate, Exercise, WorkoutExercise } from '../types';
+import { Workout, WorkoutTemplate, Exercise, WorkoutExercise } from '../types/index';
 
 const STORAGE_KEYS = {
   WORKOUTS: 'workouts',
@@ -126,6 +126,23 @@ export const workoutService = {
       ...workout,
       date: new Date(workout.date),
     };
+  },
+
+  async getWorkoutsByDate(date: Date): Promise<Workout[]> {
+    try {
+      const allWorkouts = await this.getAllWorkouts();
+      return allWorkouts.filter(workout => {
+        const workoutDate = new Date(workout.date);
+        return (
+          workoutDate.getFullYear() === date.getFullYear() &&
+          workoutDate.getMonth() === date.getMonth() &&
+          workoutDate.getDate() === date.getDate()
+        );
+      });
+    } catch (error) {
+      console.error('Error getting workouts by date:', error);
+      return [];
+    }
   },
 
   // Delete a specific workout by ID

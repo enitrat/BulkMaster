@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -11,10 +11,11 @@ import {
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { Exercise, ExerciseCategory } from '../types';
+import { Exercise, ExerciseCategory } from '../types/index';
 import { exerciseService } from '../services/exerciseService';
 import { templateService } from '../services/templateService';
 import AddExerciseModal from '../components/AddExerciseModal';
+import { useFocusEffect } from '@react-navigation/native';
 
 export default function NewTemplateScreen() {
   const { templateId } = useLocalSearchParams<{ templateId?: string }>();
@@ -26,24 +27,30 @@ export default function NewTemplateScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showAddExerciseModal, setShowAddExerciseModal] = useState(false);
 
-  useEffect(() => {
-    loadData();
+  const loadData = useCallback(async () => {
+    try {
+      const [exercises, template] = await Promise.all([
+        exerciseService.getAllExercises(),
+        templateId ? templateService.getTemplateById(templateId) : null
+      ]);
+
+      setExercises(exercises);
+      if (template) {
+        setName(template.name);
+        setDescription(template.description || '');
+        setSelectedExercises(template.exercises);
+      }
+    } catch (error) {
+      console.error('Error loading data:', error);
+      Alert.alert('Error', 'Failed to load data');
+    }
   }, [templateId]);
 
-  const loadData = async () => {
-    const [allExercises, existingTemplate] = await Promise.all([
-      exerciseService.getAllExercises(),
-      templateId ? templateService.getTemplateById(templateId) : null,
-    ]);
-
-    setExercises(allExercises);
-
-    if (existingTemplate) {
-      setName(existingTemplate.name);
-      setDescription(existingTemplate.description || '');
-      setSelectedExercises(existingTemplate.exercises);
-    }
-  };
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+    }, [loadData])
+  );
 
   const filteredExercises = exercises
     .filter(exercise => {
@@ -145,11 +152,10 @@ export default function NewTemplateScreen() {
     );
   };
 
-  const handleExerciseAdded = (newExercise: Exercise) => {
-    loadData(); // Reload all data including exercises
-    setSearchQuery(''); // Clear search query
-    // Switch to the new exercise's category
-    setSelectedCategory(newExercise.category as ExerciseCategory);
+  const handleExerciseAdded = async () => {
+    await loadData();
+    setSearchQuery('');
+    setSelectedCategory('ALL');
   };
 
   return (

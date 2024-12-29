@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -14,11 +14,12 @@ import {
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { Workout, WorkoutExercise, ExerciseSet, Exercise } from '../types';
+import { Workout, WorkoutExercise, ExerciseSet, Exercise } from '../types/index';
 import { workoutService } from '../services/workoutService';
 import { templateService } from '../services/templateService';
 import { exerciseService } from '../services/exerciseService';
 import RestTimer from '../components/RestTimer';
+import { useFocusEffect } from '@react-navigation/native';
 
 type SetModalProps = {
   visible: boolean;
@@ -119,12 +120,7 @@ export default function WorkoutInProgressScreen() {
   const [selectedSetIndex, setSelectedSetIndex] = useState<number>(-1);
   const [showRestTimer, setShowRestTimer] = useState(false);
 
-  useEffect(() => {
-    initializeWorkout();
-    loadAvailableExercises();
-  }, [templateId]);
-
-  const initializeWorkout = async () => {
+  const loadData = useCallback(async () => {
     try {
       let activeWorkout = await workoutService.getActiveWorkout();
 
@@ -139,17 +135,22 @@ export default function WorkoutInProgressScreen() {
       }
 
       setWorkout(activeWorkout);
+
+      // Also refresh available exercises
+      const exercises = await exerciseService.getAllExercises();
+      setAvailableExercises(exercises);
     } catch (error) {
-      console.error('Error initializing workout:', error);
-      Alert.alert('Error', 'Failed to start workout');
+      console.error('Error loading workout data:', error);
+      Alert.alert('Error', 'Failed to load workout data');
       router.back();
     }
-  };
+  }, [templateId]);
 
-  const loadAvailableExercises = async () => {
-    const exercises = await exerciseService.getAllExercises();
-    setAvailableExercises(exercises);
-  };
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+    }, [loadData])
+  );
 
   const handleAddSet = (exerciseIndex: number) => {
     setSelectedExerciseIndex(exerciseIndex);
@@ -185,11 +186,14 @@ export default function WorkoutInProgressScreen() {
       };
     }
 
-    setWorkout(updatedWorkout);
-    await workoutService.updateExerciseSets(
-      selectedExerciseIndex,
-      exercise.sets
-    );
+    try {
+      await workoutService.updateActiveWorkout(updatedWorkout);
+      setWorkout(updatedWorkout);
+      await loadData(); // Refresh data after update
+    } catch (error) {
+      console.error('Error saving set:', error);
+      Alert.alert('Error', 'Failed to save set');
+    }
   };
 
   const handleDeleteSet = (exerciseIndex: number, setIndex: number) => {
