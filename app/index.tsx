@@ -10,6 +10,7 @@ import TodayTab from '../components/Tabs/TodayTab';
 import WorkoutsTab from '../components/Tabs/WorkoutsTab';
 import NutritionTab from '../components/Tabs/NutritionTab';
 import HistoryTab from '../components/Tabs/HistoryTab';
+import SettingsTab from '../components/Tabs/SettingsTab';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -67,6 +68,7 @@ export default function HomeScreen() {
     { key: 'workouts', title: 'Workouts', focusedIcon: 'dumbbell', unfocusedIcon: 'dumbbell' },
     { key: 'nutrition', title: 'Nutrition', focusedIcon: 'food-apple', unfocusedIcon: 'food-apple' },
     { key: 'history', title: 'History', focusedIcon: 'history', unfocusedIcon: 'history' },
+    { key: 'settings', title: 'Settings', focusedIcon: 'cog', unfocusedIcon: 'cog' },
   ];
 
   const renderScene = BottomNavigation.SceneMap({
@@ -87,6 +89,7 @@ export default function HomeScreen() {
         setHistoryView={setHistoryView}
       />
     ),
+    settings: () => <SettingsTab />,
   });
 
   return (

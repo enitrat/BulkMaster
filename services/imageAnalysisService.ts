@@ -1,11 +1,9 @@
 import OpenAI from 'openai';
 import { Ingredient, Macros } from '../types/index';
 import * as FileSystem from 'expo-file-system';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// You'll need to set your OpenAI API key in your environment variables or config
-const openai = new OpenAI({
-  apiKey: process.env.EXPO_PUBLIC_OPENAI_API_KEY // Make sure to add this to your environment variables
-});
+const OPENAI_API_KEY_STORAGE_KEY = 'openai_api_key';
 
 export interface AnalyzedMeal {
   name: string;
@@ -37,9 +35,19 @@ Format:
   }]
 }`;
 
+const getOpenAIClient = async () => {
+  const apiKey = await AsyncStorage.getItem(OPENAI_API_KEY_STORAGE_KEY);
+  if (!apiKey) {
+    throw new Error('OpenAI API key not found. Please add your API key in Settings.');
+  }
+  return new OpenAI({ apiKey });
+};
+
 export const imageAnalysisService = {
   analyzeFood: async (imageUri: string): Promise<AnalyzedMeal> => {
     try {
+      const openai = await getOpenAIClient();
+
       // Read the image file as base64
       const base64ImageData = await FileSystem.readAsStringAsync(imageUri, {
         encoding: FileSystem.EncodingType.Base64,
@@ -47,7 +55,7 @@ export const imageAnalysisService = {
 
       // Prepare the system message to get structured data
       const response = await openai.chat.completions.create({
-        model: "gpt-4o",
+        model: "gpt-4-vision-preview",
         messages: [
           {
             role: "system",
@@ -97,10 +105,11 @@ export const imageAnalysisService = {
 
   analyzeFoodWithFeedback: async (imageUri: string, feedback: string): Promise<AnalyzedMeal> => {
     try {
+      const openai = await getOpenAIClient();
+
       const base64ImageData = await FileSystem.readAsStringAsync(imageUri, {
         encoding: FileSystem.EncodingType.Base64,
       });
-
 
       const response = await openai.chat.completions.create({
         model: "gpt-4o",

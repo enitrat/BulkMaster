@@ -1,108 +1,51 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, Image, Alert } from 'react-native';
-import { Card, Text, IconButton, Chip, Button, useTheme, Portal } from 'react-native-paper';
+import React from 'react';
+import { View, StyleSheet, Image } from 'react-native';
+import { Card, Text, IconButton, useTheme } from 'react-native-paper';
 import { MealEntry, Ingredient, Macros } from '../../types/index';
-import { nutritionService } from '../../services/nutritionService';
-import AddMealModal from './AddMealModal';
+import { format } from 'date-fns';
+import { router } from 'expo-router';
 
 interface Props {
   meal: MealEntry;
-  onPress?: () => void;
-  showImage?: boolean;
-  showMacros?: boolean;
-  showNotes?: boolean;
-  compact?: boolean;
   onDeleted?: () => void;
   onEdited?: () => void;
 }
 
-const MacroSummary: React.FC<{ macros: Macros }> = ({ macros }) => {
+const CollapsedMacros: React.FC<{ macros: Macros }> = ({ macros }) => {
   const theme = useTheme();
 
-  if (!macros.calories && !macros.protein && !macros.carbs && !macros.fat) {
-    return null;
-  }
-
   return (
-    <View style={styles.macroSummary}>
-      {macros.calories !== undefined && (
-        <Chip mode="outlined" style={styles.macroChip}>
-          {Math.round(macros.calories)} kcal
-        </Chip>
+    <View style={styles.collapsedMacros}>
+      {macros.protein && (
+        <View style={styles.macroWithIcon}>
+          <IconButton icon="arm-flex" size={16} style={styles.macroIcon} />
+          <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+            {Math.round(macros.protein)}g
+          </Text>
+        </View>
       )}
-      {macros.protein !== undefined && (
-        <Chip mode="outlined" style={styles.macroChip}>
-          {Math.round(macros.protein)}g protein
-        </Chip>
+      {macros.carbs && (
+        <View style={styles.macroWithIcon}>
+          <IconButton icon="barley" size={16} style={styles.macroIcon} />
+          <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+            {Math.round(macros.carbs)}g
+          </Text>
+        </View>
       )}
-      {macros.carbs !== undefined && (
-        <Chip mode="outlined" style={styles.macroChip}>
-          {Math.round(macros.carbs)}g carbs
-        </Chip>
-      )}
-      {macros.fat !== undefined && (
-        <Chip mode="outlined" style={styles.macroChip}>
-          {Math.round(macros.fat)}g fat
-        </Chip>
+      {macros.fat && (
+        <View style={styles.macroWithIcon}>
+          <IconButton icon="oil" size={16} style={styles.macroIcon} />
+          <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+            {Math.round(macros.fat)}g
+          </Text>
+        </View>
       )}
     </View>
   );
 };
 
-export default function MealCard({
-  meal,
-  onPress,
-  showImage = true,
-  showMacros = true,
-  showNotes = true,
-  compact = false,
-  onDeleted,
-  onEdited,
-}: Props) {
-  const [showEditModal, setShowEditModal] = useState(false);
+export default function MealCard({ meal, onDeleted, onEdited }: Props) {
   const theme = useTheme();
-
-  const handleDelete = () => {
-    // Using the native Alert for now as Paper's Dialog would need more setup
-    Alert.alert(
-      'Delete Meal',
-      'Are you sure you want to delete this meal?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await nutritionService.deleteMealEntry(meal.id);
-              onDeleted?.();
-            } catch (error) {
-              console.error('Error deleting meal:', error);
-              Alert.alert('Error', 'Failed to delete meal');
-            }
-          },
-        },
-      ]
-    );
-  };
-
-  const handleEdit = () => {
-    setShowEditModal(true);
-  };
-
-  const handleSaveEdit = async (mealData: Omit<MealEntry, 'id' | 'date'>) => {
-    try {
-      await nutritionService.updateMealEntry({
-        ...meal,
-        ...mealData,
-      });
-      setShowEditModal(false);
-      onEdited?.();
-    } catch (error) {
-      console.error('Error updating meal:', error);
-      Alert.alert('Error', 'Failed to update meal');
-    }
-  };
 
   const macros = meal.ingredients.reduce((total: Macros, ing: Ingredient) => {
     if (!ing.macros) return total;
@@ -114,128 +57,37 @@ export default function MealCard({
     };
   }, {} as Macros);
 
-  const CardContent = () => (
-    <>
-      <Card.Title
-        title={meal.name}
-        right={(props) => (
-          <View style={styles.actions}>
-            <IconButton
-              {...props}
-              icon="pencil"
-              onPress={handleEdit}
-            />
-            <IconButton
-              {...props}
-              icon="trash-can-outline"
-              iconColor={theme.colors.error}
-              onPress={handleDelete}
-            />
-          </View>
-        )}
-      />
-
-      {showImage && meal.imageUri && (
-        <Card.Cover
-          source={{ uri: meal.imageUri }}
-          style={compact ? styles.imageCompact : styles.image}
-        />
-      )}
-
-      <Card.Content>
-        <View style={styles.ingredientsList}>
-          {meal.ingredients.map((ing, index) => (
-            <View key={`${ing.name}-${index}`} style={styles.ingredientItem}>
-              <Text variant="bodyLarge">{ing.name}</Text>
-              <Text variant="bodyMedium" style={styles.ingredientWeight}>
-                {ing.weight}g
-              </Text>
-            </View>
-          ))}
-        </View>
-
-        {showMacros && <MacroSummary macros={macros} />}
-
-        {showNotes && meal.notes && (
-          <Text variant="bodyMedium" style={styles.notes}>
-            {meal.notes}
-          </Text>
-        )}
-      </Card.Content>
-    </>
-  );
-
-  const cardProps = {
-    style: styles.card,
-    onPress: onPress,
-    mode: 'elevated' as const,
+  const handlePress = () => {
+    router.push(`/meal/${meal.id}`);
   };
 
   return (
-    <>
-      <Card {...cardProps}>
-        <Card.Title
-          title={meal.name}
-          right={(props) => (
-            <View style={styles.actions}>
-              <IconButton
-                {...props}
-                icon="pencil"
-                onPress={handleEdit}
-              />
-              <IconButton
-                {...props}
-                icon="trash-can-outline"
-                iconColor={theme.colors.error}
-                onPress={handleDelete}
-              />
-            </View>
-          )}
-        />
-
-        {showImage && meal.imageUri && (
-          <Card.Cover
+    <Card style={styles.card} onPress={handlePress} mode="elevated">
+      <View style={styles.container}>
+        {meal.imageUri ? (
+          <Image
             source={{ uri: meal.imageUri }}
-            style={compact ? styles.imageCompact : styles.image}
+            style={styles.thumbnailImage}
           />
+        ) : (
+          <View style={[styles.thumbnailImage, { backgroundColor: theme.colors.surfaceVariant }]} />
         )}
-
-        <Card.Content>
-          <View style={styles.ingredientsList}>
-            {meal.ingredients.map((ing, index) => (
-              <View key={`${ing.name}-${index}`} style={styles.ingredientItem}>
-                <Text variant="bodyLarge">{ing.name}</Text>
-                <Text variant="bodyMedium" style={styles.ingredientWeight}>
-                  {ing.weight}g
-                </Text>
-              </View>
-            ))}
+        <View style={styles.content}>
+          <View style={styles.header}>
+            <Text variant="titleMedium" numberOfLines={1}>{meal.name}</Text>
+            <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+              {format(new Date(meal.date), 'HH:mm')}
+            </Text>
           </View>
 
-          {showMacros && <MacroSummary macros={macros} />}
+          <Text variant="titleSmall" style={{ color: theme.colors.primary }}>
+            {Math.round(macros.calories || 0)} kcal
+          </Text>
 
-          {showNotes && meal.notes && (
-            <Text variant="bodyMedium" style={styles.notes}>
-              {meal.notes}
-            </Text>
-          )}
-        </Card.Content>
-      </Card>
-
-      <Portal>
-        <AddMealModal
-          visible={showEditModal}
-          onClose={() => setShowEditModal(false)}
-          onSave={handleSaveEdit}
-          initialMeal={{
-            name: meal.name,
-            ingredients: meal.ingredients,
-            notes: meal.notes,
-            imageUri: meal.imageUri,
-          }}
-        />
-      </Portal>
-    </>
+          <CollapsedMacros macros={macros} />
+        </View>
+      </View>
+    </Card>
   );
 }
 
@@ -243,44 +95,40 @@ const styles = StyleSheet.create({
   card: {
     marginBottom: 12,
   },
-  actions: {
+  container: {
     flexDirection: 'row',
+    height: 100,
   },
-  image: {
-    height: 200,
+  thumbnailImage: {
+    width: '33%',
+    height: '100%',
+    borderTopLeftRadius: 12,
+    borderBottomLeftRadius: 12,
   },
-  imageCompact: {
-    height: 120,
+  content: {
+    flex: 1,
+    padding: 12,
+    justifyContent: 'space-between',
   },
-  ingredientsList: {
-    gap: 8,
-    marginTop: 8,
-  },
-  ingredientItem: {
+  header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 4,
   },
-  ingredientWeight: {
-    opacity: 0.7,
-  },
-  macroSummary: {
+  collapsedMacros: {
     flexDirection: 'row',
+    alignItems: 'center',
     flexWrap: 'wrap',
-    gap: 8,
-    marginTop: 16,
-    paddingTop: 16,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: 'rgba(0, 0, 0, 0.12)',
+    gap: 12,
   },
-  macroChip: {
-    marginRight: 4,
-    marginBottom: 4,
+  macroWithIcon: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  notes: {
-    marginTop: 16,
-    fontStyle: 'italic',
-    opacity: 0.7,
+  macroIcon: {
+    margin: 0,
+    padding: 0,
+    width: 20,
+    height: 20,
   },
 });

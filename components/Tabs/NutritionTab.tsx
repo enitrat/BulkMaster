@@ -76,7 +76,6 @@ export default function NutritionTab() {
       showNotes={true}
       onDeleted={loadMeals}
       onEdited={loadMeals}
-      onPress={() => handleEditMeal(item)}
     />
   );
 

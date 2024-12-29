@@ -41,6 +41,11 @@ export const nutritionService = {
     }
   },
 
+  async getMealById(id: string): Promise<MealEntry | null> {
+    const meals = await this.getAllMeals();
+    return meals.find(meal => meal.id === id) || null;
+  },
+
   async getAllMeals(): Promise<MealEntry[]> {
     try {
       const mealsJson = await AsyncStorage.getItem(STORAGE_KEYS.MEALS);

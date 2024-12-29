@@ -22,6 +22,7 @@ export default function WorkoutCard({
   onEdited,
 }: Props) {
   const theme = useTheme();
+  const [isExpanded, setIsExpanded] = React.useState(false);
 
   const handleDelete = () => {
     Alert.alert(
@@ -52,18 +53,25 @@ export default function WorkoutCard({
         title={workout.name || `Workout on ${new Date(workout.date).toLocaleDateString()}`}
         subtitle={`${workout.exercises.length} exercises`}
         right={(props) => (
-          showActions && (
+          <View style={styles.actionContainer}>
+            {isExpanded && showActions && (
+              <IconButton
+                {...props}
+                icon="trash-can-outline"
+                iconColor={theme.colors.error}
+                onPress={handleDelete}
+              />
+            )}
             <IconButton
               {...props}
-              icon="trash-can-outline"
-              iconColor={theme.colors.error}
-              onPress={handleDelete}
+              icon={isExpanded ? 'chevron-up' : 'chevron-down'}
+              onPress={() => setIsExpanded(!isExpanded)}
             />
-          )
+          </View>
         )}
       />
 
-      {!compact && (
+      {!compact && isExpanded && (
         <Card.Content>
           <List.Section>
             {workout.exercises.map((exercise: WorkoutExercise) => (
@@ -100,5 +108,9 @@ export default function WorkoutCard({
 const styles = StyleSheet.create({
   card: {
     marginBottom: 12,
+  },
+  actionContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 });
