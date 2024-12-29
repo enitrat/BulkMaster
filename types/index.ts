@@ -53,7 +53,6 @@ export interface Macros {
 }
 
 export interface Ingredient {
-  id: string;
   name: string;
   weight: number; // in grams
   macros?: Macros;

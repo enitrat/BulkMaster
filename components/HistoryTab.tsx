@@ -77,7 +77,7 @@ export default function HistoryTab({ workouts, exercises, historyView, setHistor
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedDateMeals, setSelectedDateMeals] = useState<MealEntry[]>([]);
   const [selectedDateWorkouts, setSelectedDateWorkouts] = useState<Workout[]>([]);
-  const [isCalendarVisible, setIsCalendarVisible] = useState(true);
+  const [isCalendarVisible, setIsCalendarVisible] = useState(false);
 
   const loadDayData = useCallback(async (date: Date) => {
     const meals = await nutritionService.getMealsByDate(date);
@@ -189,8 +189,8 @@ export default function HistoryTab({ workouts, exercises, historyView, setHistor
           <View key={meal.id} style={styles.mealCard}>
             <Text style={styles.mealName}>{meal.name}</Text>
             <View style={styles.ingredientsList}>
-              {meal.ingredients.map((ing: Ingredient) => (
-                <View key={ing.id} style={styles.ingredientItem}>
+              {meal.ingredients.map((ing: Ingredient, index: number) => (
+                <View key={`${ing.name}-${index}`} style={styles.ingredientItem}>
                   <Text style={styles.ingredientName}>{ing.name}</Text>
                   <Text style={styles.ingredientWeight}>{ing.weight}g</Text>
                 </View>
@@ -273,7 +273,8 @@ export default function HistoryTab({ workouts, exercises, historyView, setHistor
           {isCalendarVisible && (
             <Calendar
               onDayPress={(day: CalendarDayInfo) => {
-                setSelectedDate(selectedDate);
+                const newDate = new Date(day.timestamp);
+                setSelectedDate(newDate);
                 setIsCalendarVisible(false);
               }}
               markedDates={getMarkedDates()}

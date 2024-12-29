@@ -35,6 +35,12 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow BulkMaster to access your camera to analyze food for nutritional information."
+        }
       ]
     ],
     "experiments": {
