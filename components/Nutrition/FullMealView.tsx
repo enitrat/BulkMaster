@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, Image, Alert } from 'react-native';
-import { Text, IconButton, useTheme, Surface, Portal, Divider, Card, List, Avatar } from 'react-native-paper';
+import { Text, IconButton, useTheme, Surface, Portal, Divider, Card, List, Avatar, TextInput, Button } from 'react-native-paper';
 import { MealEntry, Ingredient, Macros } from '@/types/index';
 import { format } from 'date-fns';
 import { router } from 'expo-router';
@@ -14,6 +14,85 @@ interface Props {
   onEdited?: () => void;
   onDeleted?: () => void;
 }
+
+interface IngredientItemProps {
+  ingredient: Ingredient;
+  onWeightChange: (weight: number) => void;
+  onDelete: () => void;
+}
+
+const IngredientItem: React.FC<IngredientItemProps> = ({ ingredient, onWeightChange, onDelete }) => {
+  const { colors } = useTheme();
+  const [isEditing, setIsEditing] = useState(false);
+  const [weight, setWeight] = useState(ingredient.weight.toString());
+
+  const handleSave = () => {
+    const newWeight = parseFloat(weight);
+    if (!isNaN(newWeight) && newWeight > 0) {
+      onWeightChange(newWeight);
+      setIsEditing(false);
+    }
+  };
+
+  return (
+    <Card style={[styles.ingredientCard, { backgroundColor: colors.surfaceVariant }]}>
+      <Card.Content style={styles.ingredientContent}>
+        <View style={styles.ingredientMain}>
+          <IconButton
+            icon="pencil"
+            size={20}
+            onPress={() => setIsEditing(true)}
+            style={styles.editButton}
+          />
+          <Text variant="bodyLarge">{ingredient.name}</Text>
+        </View>
+        <View style={styles.weightSection}>
+          {isEditing ? (
+            <>
+              <TextInput
+                mode="flat"
+                value={weight}
+                onChangeText={setWeight}
+                keyboardType="decimal-pad"
+                style={styles.weightInput}
+                contentStyle={styles.weightInputContent}
+                right={<TextInput.Affix text="g" />}
+                dense
+              />
+              <View style={styles.editActions}>
+                <IconButton
+                  icon="check"
+                  size={20}
+                  onPress={handleSave}
+                  style={styles.actionButton}
+                />
+                <IconButton
+                  icon="close"
+                  size={20}
+                  onPress={() => {
+                    setWeight(ingredient.weight.toString());
+                    setIsEditing(false);
+                  }}
+                  style={styles.actionButton}
+                />
+                <IconButton
+                  icon="trash-can-outline"
+                  size={20}
+                  onPress={onDelete}
+                  style={styles.actionButton}
+                />
+              </View>
+            </>
+          ) : (
+            <Text variant="bodyMedium" style={{ color: colors.onSurfaceVariant }}>
+              {ingredient.weight}g
+            </Text>
+          )}
+        </View>
+      </Card.Content>
+    </Card>
+  );
+};
 
 const MacroWithIcon: React.FC<{ icon: string; value: number; unit?: string }> = ({
   icon,
@@ -78,6 +157,51 @@ export default function FullMealView({ meal, onEdited, onDeleted }: Props) {
     }
   };
 
+  const handleIngredientWeightChange = async (index: number, newWeight: number) => {
+    try {
+      const ingredient = meal.ingredients[index];
+      const weightRatio = newWeight / ingredient.weight;
+
+      // Scale all macros proportionally
+      const updatedMacros = ingredient.macros ? {
+        calories: (ingredient.macros.calories || 0) * weightRatio,
+        protein: (ingredient.macros.protein || 0) * weightRatio,
+        carbs: (ingredient.macros.carbs || 0) * weightRatio,
+        fat: (ingredient.macros.fat || 0) * weightRatio,
+      } : undefined;
+
+      const updatedIngredients = [...meal.ingredients];
+      updatedIngredients[index] = {
+        ...ingredient,
+        weight: newWeight,
+        macros: updatedMacros,
+      };
+
+      await nutritionService.updateMealEntry({
+        ...meal,
+        ingredients: updatedIngredients,
+      });
+      onEdited?.();
+    } catch (error) {
+      console.error('Error updating ingredient:', error);
+      Alert.alert('Error', 'Failed to update ingredient');
+    }
+  };
+
+  const handleIngredientDelete = async (index: number) => {
+    try {
+      const updatedIngredients = meal.ingredients.filter((_, i) => i !== index);
+      await nutritionService.updateMealEntry({
+        ...meal,
+        ingredients: updatedIngredients,
+      });
+      onEdited?.();
+    } catch (error) {
+      console.error('Error deleting ingredient:', error);
+      Alert.alert('Error', 'Failed to delete ingredient');
+    }
+  };
+
   return (
     <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
       <StatusBar style="light" />
@@ -129,17 +253,16 @@ export default function FullMealView({ meal, onEdited, onDeleted }: Props) {
               <Card style={styles.sectionCard}>
                 <Card.Content>
                   <List.Subheader style={styles.sectionTitle}>Ingredients</List.Subheader>
-                  {meal.ingredients.map((ingredient, index) => (
-                    <List.Item
-                      key={index}
-                      title={ingredient.name}
-                      right={() => (
-                        <Text variant="bodyMedium" style={{ color: colors.onSurfaceVariant }}>
-                          {ingredient.weight}g
-                        </Text>
-                      )}
-                    />
-                  ))}
+                  <View style={styles.ingredientsList}>
+                    {meal.ingredients.map((ingredient, index) => (
+                      <IngredientItem
+                        key={index}
+                        ingredient={ingredient}
+                        onWeightChange={(weight) => handleIngredientWeightChange(index, weight)}
+                        onDelete={() => handleIngredientDelete(index)}
+                      />
+                    ))}
+                  </View>
                 </Card.Content>
               </Card>
 
@@ -297,5 +420,51 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'flex-start',
     gap: 12,
+  },
+  ingredientsList: {
+    gap: 8,
+  },
+  ingredientCard: {
+    elevation: 1,
+  },
+  ingredientContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+  },
+  ingredientMain: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  editButton: {
+    margin: 0,
+  },
+  weightSection: {
+    minWidth: 180,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+  },
+  weightInput: {
+    backgroundColor: 'transparent',
+    width: 80,
+    height: 40,
+    marginRight: 8,
+  },
+  weightInputContent: {
+    backgroundColor: 'transparent',
+    height: 40,
+  },
+  editActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  actionButton: {
+    margin: 0,
+    width: 32,
+    height: 32,
   },
 });

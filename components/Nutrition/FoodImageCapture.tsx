@@ -179,7 +179,8 @@ export default function FoodImageCapture({ visible, onAnalysisComplete, onClose 
   const [currentAnalysis, setCurrentAnalysis] = useState<MealEntry | null>(null);
   const [showReview, setShowReview] = useState(false);
   const [facing, setFacing] = useState<CameraType>('back');
-  const [zoom, setZoom] = useState(0.3);
+  const [zoom, setZoom] = useState(0.5);
+  const [autoFocus, setAutoFocus] = useState(true);
 
   useEffect(() => {
     (async () => {
@@ -267,83 +268,69 @@ export default function FoodImageCapture({ visible, onAnalysisComplete, onClose 
     );
   }
 
-  return (
-    <>
-      <Modal visible={visible} animationType="slide">
-        <View style={styles.container}>
-          <View style={styles.header}>
-            <TouchableOpacity onPress={handleClose}>
-              <Ionicons name="close" size={24} color="#666" />
-            </TouchableOpacity>
-            <Text style={styles.title}>Take Photo</Text>
-            <View style={{ width: 24 }} />
-          </View>
+  return showReview && currentAnalysis ? (
+    <ReviewScreen
+      visible={visible}
+      imageUri={capturedImage!}
+      initialAnalysis={currentAnalysis}
+      onAccept={onAnalysisComplete}
+      onClose={handleClose}
+    />
+  ) : (
+    <Modal visible={visible} animationType="slide">
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={handleClose}>
+            <Ionicons name="close" size={24} color="#666" />
+          </TouchableOpacity>
+          <Text style={styles.title}>Take Photo</Text>
+          <View style={{ width: 24 }} />
+        </View>
 
-          <View style={styles.cameraContainer}>
-            {capturedImage && isAnalyzing ? (
-              <Image source={{ uri: capturedImage }} style={styles.camera} resizeMode="cover" />
-            ) : (
-              <CameraView
-                ref={cameraRef}
-                style={styles.camera}
-                facing={facing}
-                zoom={zoom}
-              >
-                <View style={styles.controlsContainer}>
-                  <View style={styles.zoomContainer}>
-                    <TouchableOpacity
-                      style={styles.zoomButton}
-                      onPress={handleZoomOut}
-                    >
-                      <Text style={styles.zoomButtonText}>-</Text>
-                    </TouchableOpacity>
-                    <Text style={styles.zoomText}>{(zoom * 100).toFixed(1)}%</Text>
-                    <TouchableOpacity
-                      style={styles.zoomButton}
-                      onPress={handleZoomIn}
-                    >
-                      <Text style={styles.zoomButtonText}>+</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              </CameraView>
-            )}
-          </View>
-
-          <View style={styles.controls}>
-            {isAnalyzing ? (
-              <View style={styles.analyzing}>
-                <ActivityIndicator size="large" color="#007AFF" />
-                <Text style={styles.analyzingText}>Analyzing image...</Text>
-              </View>
-            ) : (
+        <View style={styles.cameraContainer}>
+          <CameraView
+            ref={cameraRef}
+            style={StyleSheet.absoluteFill}
+            facing={facing}
+            zoom={zoom}
+            active={visible}
+          />
+          <View style={[styles.controlsContainer, { zIndex: 2 }]}>
+            <View style={styles.zoomContainer}>
               <TouchableOpacity
-                style={styles.captureButton}
-                onPress={takePicture}
+                style={styles.zoomButton}
+                onPress={handleZoomOut}
               >
-                <View style={styles.captureButtonInner} />
+                <Text style={styles.zoomButtonText}>-</Text>
               </TouchableOpacity>
-            )}
+              <Text style={styles.zoomText}>{(zoom * 100).toFixed(1)}%</Text>
+              <TouchableOpacity
+                style={styles.zoomButton}
+                onPress={handleZoomIn}
+              >
+                <Text style={styles.zoomButtonText}>+</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
-      </Modal>
 
-      {showReview && capturedImage && currentAnalysis && (
-        <ReviewScreen
-          visible={showReview}
-          imageUri={capturedImage}
-          initialAnalysis={currentAnalysis}
-          onAccept={(meal) => {
-            setShowReview(false);
-            onAnalysisComplete(meal);
-          }}
-          onClose={() => {
-            setShowReview(false);
-            handleClose();
-          }}
-        />
-      )}
-    </>
+        <View style={styles.controls}>
+          {isAnalyzing ? (
+            <View style={styles.analyzing}>
+              <ActivityIndicator size="large" color="#007AFF" />
+              <Text style={styles.analyzingText}>Analyzing image...</Text>
+            </View>
+          ) : (
+            <TouchableOpacity
+              style={styles.captureButton}
+              onPress={takePicture}
+            >
+              <View style={styles.captureButtonInner} />
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+    </Modal>
   );
 }
 
