@@ -1,7 +1,6 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { View } from 'react-native';
 import { CartesianChart, Line, Scatter } from 'victory-native';
-import { useFont } from '@shopify/react-native-skia';
 import { Card, Text, useTheme, List } from 'react-native-paper';
 import { Workout, Exercise } from '../../types/index';
 

@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Platform, Vibration } from 'react-native';
 import { Card, Text, IconButton, Button, useTheme, Surface } from 'react-native-paper';
-import Animated, {
-  useAnimatedStyle,
-  withTiming,
-  useSharedValue,
-  withSpring,
-} from 'react-native-reanimated';
+// import Animated, {
+//   useAnimatedStyle,
+//   withTiming,
+//   useSharedValue,
+//   withSpring,
+// } from 'react-native-reanimated';
 
 const DEFAULT_DURATIONS = [60, 90, 120, 180]; // in seconds
 
@@ -19,7 +19,7 @@ export default function RestTimer({ onComplete }: RestTimerProps) {
   const [isActive, setIsActive] = useState(false);
   const [duration, setDuration] = useState(90); // default 90 seconds
   const [timeLeft, setTimeLeft] = useState(duration);
-  const progress = useSharedValue(1);
+  // const progress = useSharedValue(1);
   const timerRef = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
@@ -43,7 +43,7 @@ export default function RestTimer({ onComplete }: RestTimerProps) {
       }, 1000);
 
       // Animate progress bar
-      progress.value = withTiming(0, { duration: timeLeft * 1000 });
+      // progress.value = withTiming(0, { duration: timeLeft * 1000 });
     }
 
     return () => {
@@ -61,7 +61,7 @@ export default function RestTimer({ onComplete }: RestTimerProps) {
     const duration = newDuration || DEFAULT_DURATIONS[1];
     setDuration(duration);
     setTimeLeft(duration);
-    progress.value = withSpring(1);
+    // progress.value = withSpring(1);
   };
 
   const toggleTimer = () => {
@@ -77,24 +77,26 @@ export default function RestTimer({ onComplete }: RestTimerProps) {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    width: `${progress.value * 100}%`,
-  }));
+  // const animatedStyle = useAnimatedStyle(() => ({
+  //   width: `${progress.value * 100}%`,
+  // }));
 
   return (
     <Surface style={{ margin: 16 }} elevation={1}>
       <Card>
         <Card.Content style={{ gap: 16 }}>
           <View style={{ height: 4, backgroundColor: theme.colors.surfaceVariant, borderRadius: 2, overflow: 'hidden' }}>
-            <Animated.View
+            {/* <Animated.View
               style={[
                 {
                   height: '100%',
                   backgroundColor: timeLeft > 10 ? theme.colors.primary : theme.colors.error,
                 },
-                animatedStyle,
+                // animatedStyle,
               ]}
             />
+
+            */}
           </View>
 
           <Text variant="displayMedium" style={{ textAlign: 'center', fontVariant: ['tabular-nums'] }}>

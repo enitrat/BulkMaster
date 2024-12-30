@@ -9,7 +9,8 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.msaug.BulkMaster"
     },
     "android": {
       "adaptiveIcon": {
@@ -55,6 +56,10 @@
       "eas": {
         "projectId": "5f16567e-8dde-411b-bf38-b79e01007c24"
       }
+    },
+    "runtimeVersion": "1.0.0",
+    "updates": {
+      "url": "https://u.expo.dev/5f16567e-8dde-411b-bf38-b79e01007c24"
     }
   }
 }

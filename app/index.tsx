@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, Alert, StatusBar as RNStatusBar } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { Surface, useTheme, Appbar, BottomNavigation, Text } from 'react-native-paper';
+import { Surface, useTheme, BottomNavigation } from 'react-native-paper';
 import { WorkoutTemplate, Workout, Exercise, HistoryView } from '../types/index';
 import { templateService } from '../services/templateService';
 import { exerciseService } from '../services/exerciseService';
@@ -14,8 +14,8 @@ import SettingsTab from '../components/Tabs/SettingsTab';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-export default function HomeScreen() {
-  const theme = useTheme();
+const Index = () => {
+  const { colors } = useTheme();
   const [templates, setTemplates] = useState<WorkoutTemplate[]>([]);
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [activeWorkout, setActiveWorkout] = useState<Workout | null>(null);
@@ -94,7 +94,7 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1 }} edges={['left', 'right']}>
-      <StatusBar style={theme.colors.background === 'dark' ? 'light' : 'dark'} />
+      <StatusBar style={colors.background === 'dark' ? 'light' : 'dark'} />
       <Surface style={{ flex: 1 }}>
         <View style={{ height: RNStatusBar.currentHeight }} />
         <BottomNavigation
@@ -105,21 +105,19 @@ export default function HomeScreen() {
           sceneAnimationEnabled={true}
           compact={false}
           safeAreaInsets={{ bottom: 0 }}
-          activeColor={theme.colors.primary}
+          activeColor={colors.primary}
           barStyle={{
-            backgroundColor: theme.colors.elevation.level2,
+            backgroundColor: colors.elevation.level2,
             borderTopWidth: 1,
-            borderTopColor: theme.colors.surfaceVariant,
+            borderTopColor: colors.surfaceVariant,
           }}
           activeIndicatorStyle={{
-            backgroundColor: theme.colors.primaryContainer,
+            backgroundColor: colors.primaryContainer,
             height: 32,
             marginVertical: 4,
           }}
           theme={{
-            ...theme,
             colors: {
-              ...theme.colors,
               secondaryContainer: 'transparent',
             },
           }}
@@ -127,4 +125,6 @@ export default function HomeScreen() {
       </Surface>
     </SafeAreaView>
   );
-}
+};
+
+export default Index;
