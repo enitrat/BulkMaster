@@ -7,6 +7,10 @@ import { useColorScheme, Platform } from 'react-native';
 import { useEffect } from 'react';
 import { DefaultTheme, PaperProvider } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+export {
+  // Catch any errors thrown by the Layout component.
+  ErrorBoundary,
+  } from 'expo-router';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
