@@ -1,6 +1,6 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Alert, ScrollView } from "react-native";
-import { router, useLocalSearchParams, useFocusEffect } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import {
   Surface,
   Text,
@@ -29,6 +29,9 @@ import { templateService } from "../services/templateService";
 import { exerciseService } from "../services/exerciseService";
 import RestTimer from "@/components/Workout/RestTimer";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { LoadingView } from "@/components/common/LoadingView";
+import { ErrorView } from "@/components/common/ErrorView";
 
 type SetModalProps = {
   visible: boolean;
@@ -134,19 +137,33 @@ const SetModal: React.FC<SetModalProps> = ({
 
 export default function WorkoutInProgress() {
   const theme = useTheme();
+  const queryClient = useQueryClient();
   const { templateId } = useLocalSearchParams<{ templateId?: string }>();
-  const [workout, setWorkout] = useState<Workout | null>(null);
-  const [availableExercises, setAvailableExercises] = useState<Exercise[]>([]);
   const [showExerciseList, setShowExerciseList] = useState(false);
   const [showSetModal, setShowSetModal] = useState(false);
   const [selectedExerciseIndex, setSelectedExerciseIndex] =
     useState<number>(-1);
   const [showRestTimer, setShowRestTimer] = useState(false);
 
-  const loadData = useCallback(async () => {
-    try {
-      let activeWorkout = await workoutService.getActiveWorkout();
+  const {
+    data: exercises,
+    isLoading: exercisesLoading,
+    error: exercisesError,
+    refetch: refetchExercises,
+  } = useQuery({
+    queryKey: ["exercises"],
+    queryFn: () => exerciseService.getAllExercises(),
+  });
 
+  const {
+    data: workout,
+    isLoading: workoutLoading,
+    error: workoutError,
+    refetch: refetchWorkout,
+  } = useQuery({
+    queryKey: ["activeWorkout"],
+    queryFn: async () => {
+      let activeWorkout = await workoutService.getActiveWorkout();
       if (!activeWorkout) {
         if (templateId) {
           const template = await templateService.getTemplateById(templateId);
@@ -156,33 +173,78 @@ export default function WorkoutInProgress() {
           activeWorkout = await workoutService.startWorkout();
         }
       }
+      return activeWorkout;
+    },
+  });
 
-      setWorkout(activeWorkout);
+  const updateWorkoutMutation = useMutation({
+    mutationFn: (updatedWorkout: Workout) =>
+      workoutService.updateActiveWorkout(updatedWorkout),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["activeWorkout"] });
+    },
+    onError: (error) => {
+      console.error("Error updating workout:", error);
+      Alert.alert("Error", "Failed to update workout");
+    },
+  });
 
-      // Also refresh available exercises
-      const exercises = await exerciseService.getAllExercises();
-      setAvailableExercises(exercises);
-    } catch (error) {
-      console.error("Error loading workout data:", error);
-      Alert.alert("Error", "Failed to load workout data");
-      router.back();
-    }
-  }, [templateId]);
+  const addExerciseMutation = useMutation({
+    mutationFn: (exercise: Exercise) =>
+      workoutService.addExerciseToWorkout(exercise),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["activeWorkout"] });
+      setShowExerciseList(false);
+    },
+    onError: (error) => {
+      console.error("Error adding exercise:", error);
+      Alert.alert("Error", "Failed to add exercise");
+    },
+  });
 
-  useFocusEffect(
-    useCallback(() => {
-      loadData();
-    }, [loadData]),
-  );
+  const completeWorkoutMutation = useMutation({
+    mutationFn: () => workoutService.completeWorkout(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["workouts"] });
+      Alert.alert("Success", "Workout completed!", [
+        { text: "OK", onPress: () => router.back() },
+      ]);
+    },
+    onError: (error) => {
+      console.error("Error completing workout:", error);
+      Alert.alert("Error", "Failed to complete workout");
+    },
+  });
+
+  const isLoading = exercisesLoading || workoutLoading;
+  const error = exercisesError || workoutError;
+
+  if (isLoading) {
+    return <LoadingView />;
+  }
+
+  if (error) {
+    return (
+      <ErrorView
+        error={error}
+        onRetry={() => {
+          refetchExercises();
+          refetchWorkout();
+        }}
+      />
+    );
+  }
+
+  if (!workout) {
+    return <LoadingView />;
+  }
 
   const handleEditSet = (exerciseIndex: number) => {
     setSelectedExerciseIndex(exerciseIndex);
     setShowSetModal(true);
   };
 
-  const handleSaveSet = async (weight: number, reps: number) => {
-    if (!workout) return;
-
+  const handleSaveSet = (weight: number, reps: number) => {
     const updatedWorkout = { ...workout };
     const exercise = updatedWorkout.exercises[selectedExerciseIndex];
 
@@ -194,49 +256,24 @@ export default function WorkoutInProgress() {
       },
     ];
 
-    try {
-      await workoutService.updateActiveWorkout(updatedWorkout);
-      setWorkout(updatedWorkout);
-    } catch (error) {
-      console.error("Error saving set:", error);
-      Alert.alert("Error", "Failed to save set");
-    }
+    updateWorkoutMutation.mutate(updatedWorkout);
   };
 
-  const toggleSetCompletion = async (exerciseIndex: number) => {
-    if (!workout) return;
-
+  const toggleSetCompletion = (exerciseIndex: number) => {
     const updatedWorkout = { ...workout };
     const exercise = updatedWorkout.exercises[exerciseIndex];
     if (exercise.sets[0]) {
       exercise.sets[0].completed = !exercise.sets[0].completed;
-      setWorkout(updatedWorkout);
-      await workoutService.updateActiveWorkout(updatedWorkout);
+      updateWorkoutMutation.mutate(updatedWorkout);
     }
   };
 
-  const addExercise = async (exercise: Exercise) => {
-    try {
-      await workoutService.addExerciseToWorkout(exercise);
-      const updatedWorkout = await workoutService.getActiveWorkout();
-      setWorkout(updatedWorkout);
-      setShowExerciseList(false);
-    } catch (error) {
-      console.error("Error adding exercise:", error);
-      Alert.alert("Error", "Failed to add exercise");
-    }
+  const addExercise = (exercise: Exercise) => {
+    addExerciseMutation.mutate(exercise);
   };
 
-  const finishWorkout = async () => {
-    try {
-      await workoutService.completeWorkout();
-      Alert.alert("Success", "Workout completed!", [
-        { text: "OK", onPress: () => router.back() },
-      ]);
-    } catch (error) {
-      console.error("Error completing workout:", error);
-      Alert.alert("Error", "Failed to complete workout");
-    }
+  const finishWorkout = () => {
+    completeWorkoutMutation.mutate();
   };
 
   const renderExercise = ({
@@ -302,16 +339,6 @@ export default function WorkoutInProgress() {
     );
   };
 
-  if (!workout) {
-    return (
-      <Surface
-        style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
-      >
-        <ActivityIndicator size="large" />
-      </Surface>
-    );
-  }
-
   if (showExerciseList) {
     return (
       <Surface style={{ flex: 1 }}>
@@ -326,7 +353,7 @@ export default function WorkoutInProgress() {
         </SafeAreaView>
 
         <ScrollView>
-          {availableExercises.map((exercise) => (
+          {exercises?.map((exercise) => (
             <List.Item
               key={exercise.id}
               title={exercise.name}
@@ -379,6 +406,8 @@ export default function WorkoutInProgress() {
             icon="check"
             onPress={finishWorkout}
             style={{ flex: 1 }}
+            loading={completeWorkoutMutation.isPending}
+            disabled={completeWorkoutMutation.isPending}
           >
             Finish
           </Button>

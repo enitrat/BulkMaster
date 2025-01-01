@@ -1,36 +1,60 @@
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { Surface } from "react-native-paper";
-import { useFocusEffect } from "expo-router";
+import { useQuery } from "@tanstack/react-query";
 import HistoryTab from "../../components/Tabs/HistoryTab";
 import { workoutService } from "../../services/workoutService";
 import { exerciseService } from "../../services/exerciseService";
-import { Workout, Exercise, HistoryView } from "../../types";
+import { HistoryView } from "../../types";
+import { ErrorView } from "@/components/common/ErrorView";
+import { LoadingView } from "@/components/common/LoadingView";
 
 export default function History() {
-  const [workouts, setWorkouts] = useState<Workout[]>([]);
-  const [exercises, setExercises] = useState<Exercise[]>([]);
   const [historyView, setHistoryView] = useState<HistoryView>("calendar");
 
-  const loadData = useCallback(async () => {
-    const [loadedWorkouts, loadedExercises] = await Promise.all([
-      workoutService.getAllWorkouts(),
-      exerciseService.getAllExercises(),
-    ]);
-    setWorkouts(loadedWorkouts);
-    setExercises(loadedExercises);
-  }, []);
+  const {
+    data: workouts,
+    isLoading: workoutsLoading,
+    error: workoutsError,
+    refetch: refetchWorkouts,
+  } = useQuery({
+    queryKey: ["workouts"],
+    queryFn: () => workoutService.getAllWorkouts(),
+  });
 
-  useFocusEffect(
-    useCallback(() => {
-      loadData();
-    }, [loadData]),
-  );
+  const {
+    data: exercises,
+    isLoading: exercisesLoading,
+    error: exercisesError,
+    refetch: refetchExercises,
+  } = useQuery({
+    queryKey: ["exercises"],
+    queryFn: () => exerciseService.getAllExercises(),
+  });
+
+  const isLoading = workoutsLoading || exercisesLoading;
+  const error = workoutsError || exercisesError;
+
+  if (isLoading) {
+    return <LoadingView />;
+  }
+
+  if (error) {
+    return (
+      <ErrorView
+        error={error}
+        onRetry={() => {
+          refetchWorkouts();
+          refetchExercises();
+        }}
+      />
+    );
+  }
 
   return (
     <Surface style={{ flex: 1 }}>
       <HistoryTab
-        workouts={workouts}
-        exercises={exercises}
+        workouts={workouts ?? []}
+        exercises={exercises ?? []}
         historyView={historyView}
         setHistoryView={setHistoryView}
       />

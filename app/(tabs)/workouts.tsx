@@ -1,36 +1,60 @@
-import { useState, useCallback } from "react";
 import { Surface } from "react-native-paper";
-import { useFocusEffect } from "expo-router";
+import { useQuery } from "@tanstack/react-query";
 import WorkoutsTab from "../../components/Tabs/WorkoutsTab";
 import { templateService } from "../../services/templateService";
 import { workoutService } from "../../services/workoutService";
-import { WorkoutTemplate, Workout } from "../../types";
+import { ErrorView } from "@/components/common/ErrorView";
+import { LoadingView } from "@/components/common/LoadingView";
 
 export default function Workouts() {
-  const [templates, setTemplates] = useState<WorkoutTemplate[] | null>(null);
-  const [activeWorkout, setActiveWorkout] = useState<Workout | null>(null);
+  const {
+    data: templates,
+    isLoading: templatesLoading,
+    error: templatesError,
+    refetch: refetchTemplates,
+  } = useQuery({
+    queryKey: ["templates"],
+    queryFn: () => templateService.getAllTemplates(),
+  });
 
-  const loadData = useCallback(async () => {
-    const [loadedTemplates, loadedActiveWorkout] = await Promise.all([
-      templateService.getAllTemplates(),
-      workoutService.getActiveWorkout(),
-    ]);
-    setTemplates(loadedTemplates);
-    setActiveWorkout(loadedActiveWorkout);
-  }, []);
+  const {
+    data: activeWorkout,
+    isLoading: workoutLoading,
+    error: workoutError,
+    refetch: refetchWorkout,
+  } = useQuery({
+    queryKey: ["activeWorkout"],
+    queryFn: () => workoutService.getActiveWorkout(),
+  });
 
-  useFocusEffect(
-    useCallback(() => {
-      loadData();
-    }, [loadData]),
-  );
+  const isLoading = templatesLoading || workoutLoading;
+  const error = templatesError || workoutError;
+
+  if (isLoading) {
+    return <LoadingView />;
+  }
+
+  if (error) {
+    return (
+      <ErrorView
+        error={error}
+        onRetry={() => {
+          refetchTemplates();
+          refetchWorkout();
+        }}
+      />
+    );
+  }
 
   return (
     <Surface style={{ flex: 1 }}>
       <WorkoutsTab
-        templates={templates}
-        activeWorkout={activeWorkout}
-        onDataChange={loadData}
+        templates={templates ?? []}
+        activeWorkout={activeWorkout ?? null}
+        onDataChange={() => {
+          refetchTemplates();
+          refetchWorkout();
+        }}
       />
     </Surface>
   );

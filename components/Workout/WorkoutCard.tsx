@@ -1,8 +1,9 @@
-import React from 'react';
-import { View, StyleSheet, Alert } from 'react-native';
-import { Card, Text, IconButton, useTheme, List } from 'react-native-paper';
-import { Workout, WorkoutExercise } from '../../types/index';
-import { workoutService } from '@/services/workoutService';
+import React from "react";
+import { View, StyleSheet, Alert } from "react-native";
+import { Card, Text, IconButton, useTheme, List } from "react-native-paper";
+import { Workout, WorkoutExercise } from "../../types/index";
+import { workoutService } from "@/services/workoutService";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 interface Props {
   workout: Workout;
@@ -22,35 +23,43 @@ export default function WorkoutCard({
   onEdited,
 }: Props) {
   const theme = useTheme();
+  const queryClient = useQueryClient();
   const [isExpanded, setIsExpanded] = React.useState(false);
+
+  const deleteWorkoutMutation = useMutation({
+    mutationFn: (workoutId: string) => workoutService.deleteWorkout(workoutId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["workouts"] });
+      onDeleted?.();
+    },
+    onError: (error) => {
+      console.error("Error deleting workout:", error);
+      Alert.alert("Error", "Failed to delete workout");
+    },
+  });
 
   const handleDelete = () => {
     Alert.alert(
-      'Delete Workout',
-      'Are you sure you want to delete this workout? This action cannot be undone.',
+      "Delete Workout",
+      "Are you sure you want to delete this workout? This action cannot be undone.",
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: "Cancel", style: "cancel" },
         {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await workoutService.deleteWorkout(workout.id);
-              onDeleted?.();
-            } catch (error) {
-              console.error('Error deleting workout:', error);
-              Alert.alert('Error', 'Failed to delete workout');
-            }
-          },
+          text: "Delete",
+          style: "destructive",
+          onPress: () => deleteWorkoutMutation.mutate(workout.id),
         },
-      ]
+      ],
     );
   };
 
   const CardContent = () => (
     <>
       <Card.Title
-        title={workout.name || `Workout on ${new Date(workout.date).toLocaleDateString()}`}
+        title={
+          workout.name ||
+          `Workout on ${new Date(workout.date).toLocaleDateString()}`
+        }
         subtitle={`${workout.exercises.length} exercises`}
         right={(props) => (
           <View style={styles.actionContainer}>
@@ -60,11 +69,12 @@ export default function WorkoutCard({
                 icon="trash-can-outline"
                 iconColor={theme.colors.error}
                 onPress={handleDelete}
+                disabled={deleteWorkoutMutation.isPending}
               />
             )}
             <IconButton
               {...props}
-              icon={isExpanded ? 'chevron-up' : 'chevron-down'}
+              icon={isExpanded ? "chevron-up" : "chevron-down"}
               onPress={() => setIsExpanded(!isExpanded)}
             />
           </View>
@@ -79,7 +89,7 @@ export default function WorkoutCard({
                 key={exercise.exercise.id}
                 title={exercise.exercise.name}
                 description={`${exercise.sets[0]?.weight || 0}kg x ${exercise.sets[0]?.reps || 0}`}
-                left={props => <List.Icon {...props} icon="dumbbell" />}
+                left={(props) => <List.Icon {...props} icon="dumbbell" />}
               />
             ))}
           </List.Section>
@@ -91,7 +101,7 @@ export default function WorkoutCard({
   const cardProps = {
     style: styles.card,
     onPress: onPress,
-    mode: 'elevated' as const,
+    mode: "elevated" as const,
   };
 
   return onPress ? (
@@ -110,7 +120,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   actionContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
 });

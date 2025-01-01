@@ -19,6 +19,7 @@ import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { nutritionService } from "@/services/nutritionService";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 interface Props {
   meal: MealEntry;
@@ -155,8 +156,22 @@ const MacroWithIcon: React.FC<{
 
 export default function FullMealView({ meal, onEdited, onDeleted }: Props) {
   const { colors } = useTheme();
+  const queryClient = useQueryClient();
   const [showEditModal, setShowEditModal] = useState(false);
   const [multiplier, setMultiplier] = useState(meal.multiplier || 1);
+
+  const updateMealMutation = useMutation({
+    mutationFn: (updatedMeal: MealEntry) =>
+      nutritionService.updateMealEntry(updatedMeal),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["meals"] });
+      onEdited();
+    },
+    onError: (error) => {
+      console.error("Error updating meal:", error);
+      Alert.alert("Error", "Failed to update meal");
+    },
+  });
 
   const macros = meal.ingredients.reduce((total: Macros, ing: Ingredient) => {
     if (!ing.macros) return total;
@@ -172,84 +187,65 @@ export default function FullMealView({ meal, onEdited, onDeleted }: Props) {
     index: number,
     newWeight: number,
   ) => {
-    try {
-      const ingredient = meal.ingredients[index];
-      const weightRatio = newWeight / ingredient.weight;
+    const ingredient = meal.ingredients[index];
+    const weightRatio = newWeight / ingredient.weight;
 
-      // Scale all macros proportionally
-      const updatedMacros = ingredient.macros
-        ? {
-            calories: (ingredient.macros.calories || 0) * weightRatio,
-            protein: (ingredient.macros.protein || 0) * weightRatio,
-            carbs: (ingredient.macros.carbs || 0) * weightRatio,
-            fat: (ingredient.macros.fat || 0) * weightRatio,
-          }
-        : undefined;
+    // Scale all macros proportionally
+    const updatedMacros = ingredient.macros
+      ? {
+          calories: (ingredient.macros.calories || 0) * weightRatio,
+          protein: (ingredient.macros.protein || 0) * weightRatio,
+          carbs: (ingredient.macros.carbs || 0) * weightRatio,
+          fat: (ingredient.macros.fat || 0) * weightRatio,
+        }
+      : undefined;
 
-      const updatedIngredients = [...meal.ingredients];
-      updatedIngredients[index] = {
-        ...ingredient,
-        weight: newWeight,
-        macros: updatedMacros,
-      };
+    const updatedIngredients = [...meal.ingredients];
+    updatedIngredients[index] = {
+      ...ingredient,
+      weight: newWeight,
+      macros: updatedMacros,
+    };
 
-      await nutritionService.updateMealEntry({
-        ...meal,
-        ingredients: updatedIngredients,
-      });
-      onEdited?.();
-    } catch (error) {
-      console.error("Error updating ingredient:", error);
-      Alert.alert("Error", "Failed to update ingredient");
-    }
+    updateMealMutation.mutate({
+      ...meal,
+      ingredients: updatedIngredients,
+    });
   };
 
   const handleIngredientDelete = async (index: number) => {
-    try {
-      const updatedIngredients = meal.ingredients.filter((_, i) => i !== index);
-      await nutritionService.updateMealEntry({
-        ...meal,
-        ingredients: updatedIngredients,
-      });
-      onEdited?.();
-    } catch (error) {
-      console.error("Error deleting ingredient:", error);
-      Alert.alert("Error", "Failed to delete ingredient");
-    }
+    const updatedIngredients = meal.ingredients.filter((_, i) => i !== index);
+    updateMealMutation.mutate({
+      ...meal,
+      ingredients: updatedIngredients,
+    });
   };
 
   const handleMultiplierChange = async (newMultiplier: number) => {
     if (newMultiplier < 1) return;
 
-    try {
-      const updatedIngredients = meal.ingredients.map((ingredient) => ({
-        ...ingredient,
-        weight: (ingredient.weight / multiplier) * newMultiplier,
-        macros: ingredient.macros
-          ? {
-              calories:
-                ((ingredient.macros.calories || 0) / multiplier) *
-                newMultiplier,
-              protein:
-                ((ingredient.macros.protein || 0) / multiplier) * newMultiplier,
-              carbs:
-                ((ingredient.macros.carbs || 0) / multiplier) * newMultiplier,
-              fat: ((ingredient.macros.fat || 0) / multiplier) * newMultiplier,
-            }
-          : undefined,
-      }));
+    const updatedIngredients = meal.ingredients.map((ingredient) => ({
+      ...ingredient,
+      weight: (ingredient.weight / multiplier) * newMultiplier,
+      macros: ingredient.macros
+        ? {
+            calories:
+              ((ingredient.macros.calories || 0) / multiplier) * newMultiplier,
+            protein:
+              ((ingredient.macros.protein || 0) / multiplier) * newMultiplier,
+            carbs:
+              ((ingredient.macros.carbs || 0) / multiplier) * newMultiplier,
+            fat: ((ingredient.macros.fat || 0) / multiplier) * newMultiplier,
+          }
+        : undefined,
+    }));
 
-      await nutritionService.updateMealEntry({
-        ...meal,
-        ingredients: updatedIngredients,
-        multiplier: newMultiplier,
-      });
-      setMultiplier(newMultiplier);
-      onEdited?.();
-    } catch (error) {
-      console.error("Error updating multiplier:", error);
-      Alert.alert("Error", "Failed to update portions");
-    }
+    updateMealMutation.mutate({
+      ...meal,
+      ingredients: updatedIngredients,
+      multiplier: newMultiplier,
+    });
+    setMultiplier(newMultiplier);
   };
 
   const handleBack = () => {

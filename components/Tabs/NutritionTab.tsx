@@ -1,69 +1,85 @@
-import React, { useState, useCallback } from "react";
+import React, { useState } from "react";
 import { View, FlatList, Alert, StyleSheet } from "react-native";
-import { useFocusEffect, router } from "expo-router";
 import { Surface, FAB, Text, useTheme } from "react-native-paper";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { BOTTOM_NAV_HEIGHT, FAB_BOTTOM, MealEntry } from "../../types/index";
 import { nutritionService } from "../../services/nutritionService";
 import MealCard from "../Nutrition/MealCard";
 import FoodImageCapture from "../Nutrition/FoodImageCapture";
 import ManualMealInput from "../Nutrition/ManualMealInput";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { LoadingView } from "@/components/common/LoadingView";
+import { ErrorView } from "@/components/common/ErrorView";
 
 export default function NutritionTab() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
-  const [meals, setMeals] = useState<MealEntry[] | null>(null);
+  const queryClient = useQueryClient();
+  const today = new Date();
+
   const [showManualInput, setShowManualInput] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const loadMeals = useCallback(async () => {
-    const today = new Date();
-    const todaysMeals = await nutritionService.getMealsByDate(today);
-    setMeals(todaysMeals);
-  }, []);
+  const {
+    data: meals,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ["meals", today.toDateString()],
+    queryFn: () => nutritionService.getMealsByDate(today),
+  });
 
-  useFocusEffect(
-    useCallback(() => {
-      loadMeals();
-    }, [loadMeals]),
-  );
-
-  const handleAddMeal = async (mealData: Omit<MealEntry, "id" | "date">) => {
-    try {
-      await nutritionService.addMealEntry({
+  const addMealMutation = useMutation({
+    mutationFn: (mealData: Omit<MealEntry, "id" | "date">) =>
+      nutritionService.addMealEntry({
         ...mealData,
         date: new Date(),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["meals", today.toDateString()],
       });
-      loadMeals();
-    } catch (error) {
+    },
+    onError: (error) => {
       console.error("Error saving meal:", error);
       Alert.alert("Error", "Failed to save meal");
-    }
+    },
+  });
+
+  const handleAddMeal = async (mealData: Omit<MealEntry, "id" | "date">) => {
+    addMealMutation.mutate(mealData);
   };
 
+  if (isLoading) {
+    return <LoadingView />;
+  }
+
+  if (error) {
+    return <ErrorView error={error} onRetry={refetch} />;
+  }
+
   const renderMeal = ({ item }: { item: MealEntry }) => (
-    <MealCard meal={item} onDeleted={loadMeals} onEdited={loadMeals} />
+    <MealCard meal={item} onDeleted={refetch} onEdited={refetch} />
   );
 
   return (
     <Surface style={styles.container}>
-      {meals && (
-        <FlatList
-          data={meals}
-          renderItem={renderMeal}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={[
-            styles.listContent,
-            { paddingBottom: BOTTOM_NAV_HEIGHT + insets.bottom + 80 },
-          ]}
-          ListEmptyComponent={
-            <Text variant="bodyLarge" style={styles.emptyText}>
-              No meals recorded today
-            </Text>
-          }
-        />
-      )}
+      <FlatList
+        data={meals}
+        renderItem={renderMeal}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={[
+          styles.listContent,
+          { paddingBottom: BOTTOM_NAV_HEIGHT + insets.bottom + 80 },
+        ]}
+        ListEmptyComponent={
+          <Text variant="bodyLarge" style={styles.emptyText}>
+            No meals recorded today
+          </Text>
+        }
+      />
 
       <View style={[styles.fabContainer, { bottom: FAB_BOTTOM }]}>
         {isExpanded && (
