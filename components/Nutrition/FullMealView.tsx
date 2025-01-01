@@ -128,6 +128,7 @@ const MacroWithIcon: React.FC<{ icon: string; value: number; unit?: string }> = 
 export default function FullMealView({ meal, onEdited, onDeleted }: Props) {
   const { colors } = useTheme();
   const [showEditModal, setShowEditModal] = useState(false);
+  const [multiplier, setMultiplier] = useState(meal.multiplier || 1);
 
   const macros = meal.ingredients.reduce((total: Macros, ing: Ingredient) => {
     if (!ing.macros) return total;
@@ -202,6 +203,34 @@ export default function FullMealView({ meal, onEdited, onDeleted }: Props) {
     }
   };
 
+  const handleMultiplierChange = async (newMultiplier: number) => {
+    if (newMultiplier < 1) return;
+
+    try {
+      const updatedIngredients = meal.ingredients.map(ingredient => ({
+        ...ingredient,
+        weight: (ingredient.weight / multiplier) * newMultiplier,
+        macros: ingredient.macros ? {
+          calories: ((ingredient.macros.calories || 0) / multiplier) * newMultiplier,
+          protein: ((ingredient.macros.protein || 0) / multiplier) * newMultiplier,
+          carbs: ((ingredient.macros.carbs || 0) / multiplier) * newMultiplier,
+          fat: ((ingredient.macros.fat || 0) / multiplier) * newMultiplier,
+        } : undefined
+      }));
+
+      await nutritionService.updateMealEntry({
+        ...meal,
+        ingredients: updatedIngredients,
+        multiplier: newMultiplier,
+      });
+      setMultiplier(newMultiplier);
+      onEdited?.();
+    } catch (error) {
+      console.error('Error updating multiplier:', error);
+      Alert.alert('Error', 'Failed to update portions');
+    }
+  };
+
   return (
     <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
       <StatusBar style="light" />
@@ -230,23 +259,55 @@ export default function FullMealView({ meal, onEdited, onDeleted }: Props) {
           </View>
         </View>
 
-        <ScrollView bounces={false} style={styles.scrollView}>
-          <View style={styles.imageContainer}>
-            <Image
-              source={{ uri: meal.imageUri }}
-              style={styles.image}
-              resizeMode="cover"
-            />
-          </View>
+        <View style={styles.imageContainer}>
+          <Image
+            source={{ uri: meal.imageUri }}
+            style={styles.image}
+            resizeMode="cover"
+          />
+        </View>
 
-          <Surface style={styles.contentSurface}>
+        <Surface style={styles.contentSurface}>
+          <ScrollView
+            bounces={false}
+            showsVerticalScrollIndicator={true}
+            contentContainerStyle={{ paddingBottom: 32 }}
+          >
             <View style={styles.content}>
               <Card style={styles.titleCard}>
                 <Card.Content>
-                  <Text variant="headlineMedium">{meal.name}</Text>
-                  <Text variant="titleMedium" style={{ color: colors.onSurfaceVariant }}>
-                    {format(new Date(meal.date), 'PPP HH:mm')}
-                  </Text>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+                    <View style={{ flex: 1 }}>
+                      <Text variant="headlineMedium" numberOfLines={2}>{meal.name}</Text>
+                      <Text variant="titleMedium" style={{ color: colors.onSurfaceVariant }}>
+                        {format(new Date(meal.date), 'PPP HH:mm')}
+                      </Text>
+                    </View>
+                    <View style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      backgroundColor: colors.surfaceVariant,
+                      borderRadius: 20,
+                      height: 40,
+                    }}>
+                      <IconButton
+                        icon="minus"
+                        size={20}
+                        onPress={() => handleMultiplierChange(multiplier - 1)}
+                        disabled={multiplier <= 1}
+                        style={{ margin: 0, width: 32 }}
+                      />
+                      <Text variant="titleMedium" style={{ minWidth: 24, textAlign: 'center' }}>
+                        {multiplier}x
+                      </Text>
+                      <IconButton
+                        icon="plus"
+                        size={20}
+                        onPress={() => handleMultiplierChange(multiplier + 1)}
+                        style={{ margin: 0, width: 32 }}
+                      />
+                    </View>
+                  </View>
                 </Card.Content>
               </Card>
 
@@ -312,8 +373,8 @@ export default function FullMealView({ meal, onEdited, onDeleted }: Props) {
                 </Card>
               )}
             </View>
-          </Surface>
-        </ScrollView>
+          </ScrollView>
+        </Surface>
 
         <Portal>
           <AddMealModal
@@ -355,11 +416,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     marginRight: 8,
   },
-  scrollView: {
-    flex: 1,
-  },
   imageContainer: {
-    height: '50%',
+    height: 300,
     width: '100%',
     backgroundColor: '#000',
   },
@@ -368,13 +426,14 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   contentSurface: {
+    flex: 1,
     marginTop: -24,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     elevation: 4,
-    boxShadow: '0px -10px 10px rgba(0, 0, 0, 0.25)',
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
+    backgroundColor: 'white',
   },
   content: {
     padding: 16,

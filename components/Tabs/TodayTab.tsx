@@ -16,8 +16,8 @@ interface Props {
 
 export default function TodayTab({ onWorkoutPress, onNutritionPress }: Props) {
   const theme = useTheme();
-  const [todayWorkouts, setTodayWorkouts] = useState<any[]>([]);
-  const [todayMeals, setTodayMeals] = useState<MealEntry[]>([]);
+  const [todayWorkouts, setTodayWorkouts] = useState<any[] | null>(null);
+  const [todayMeals, setTodayMeals] = useState<MealEntry[] | null>(null);
 
   const loadTodayData = useCallback(async () => {
     const today = new Date();
@@ -35,7 +35,7 @@ export default function TodayTab({ onWorkoutPress, onNutritionPress }: Props) {
     }, [loadTodayData])
   );
 
-  const totalMacros = todayMeals.reduce((total: Macros, meal: MealEntry) => {
+  const totalMacros = (todayMeals || []).reduce((total: Macros, meal: MealEntry) => {
     const mealMacros = calculateMealMacros(meal.ingredients);
     return {
       calories: (total.calories || 0) + (mealMacros.calories || 0),
@@ -102,14 +102,14 @@ export default function TodayTab({ onWorkoutPress, onNutritionPress }: Props) {
   };
 
   const renderWorkouts = () => {
-    if (todayWorkouts.length === 0) return null;
+    if (!todayWorkouts || todayWorkouts.length === 0) return null;
 
     return (
       <List.Section style={{ marginBottom: 24 }}>
         <List.Subheader style={{ fontSize: 20, fontWeight: 'bold' }}>
           Today's Workouts
         </List.Subheader>
-        {todayWorkouts.map(workout => (
+        {todayWorkouts && todayWorkouts.map(workout => (
           <WorkoutCard
             key={workout.id}
             workout={workout}
@@ -124,14 +124,14 @@ export default function TodayTab({ onWorkoutPress, onNutritionPress }: Props) {
   };
 
   const renderMeals = () => {
-    if (todayMeals.length === 0) return null;
+    if (!todayMeals || todayMeals.length === 0) return null;
 
     return (
       <List.Section style={{ marginBottom: 24 }}>
         <List.Subheader style={{ fontSize: 20, fontWeight: 'bold' }}>
           Today's Meals
         </List.Subheader>
-        {todayMeals.map(meal => (
+        {todayMeals && todayMeals.map(meal => (
           <MealCard
             key={meal.id}
             meal={meal}
@@ -149,7 +149,7 @@ export default function TodayTab({ onWorkoutPress, onNutritionPress }: Props) {
         {renderMacroSummary()}
         {renderWorkouts()}
         {renderMeals()}
-        {todayWorkouts.length === 0 && todayMeals.length === 0 && (
+        {todayWorkouts && todayWorkouts.length === 0 && todayMeals && todayMeals.length === 0 && (
           <Text
             variant="bodyLarge"
             style={{

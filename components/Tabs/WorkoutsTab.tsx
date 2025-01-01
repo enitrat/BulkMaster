@@ -7,7 +7,7 @@ import { templateService } from '@/services/templateService';
 import { workoutService } from '@/services/workoutService';
 
 interface Props {
-  templates: WorkoutTemplate[];
+  templates: WorkoutTemplate[] | null;
   activeWorkout: Workout | null;
   onDataChange: () => void;
 }
@@ -111,13 +111,13 @@ export default function WorkoutsTab({ templates, activeWorkout, onDataChange }: 
           Your Templates
         </List.Subheader>
 
-        {templates.map(template => (
+        {templates && templates.map(template => (
           <React.Fragment key={template.id}>
             {renderTemplate(template)}
           </React.Fragment>
         ))}
 
-        {templates.length === 0 && (
+        {templates && templates.length === 0 && (
           <Text
             variant="bodyLarge"
             style={{
@@ -126,7 +126,7 @@ export default function WorkoutsTab({ templates, activeWorkout, onDataChange }: 
               opacity: 0.7,
             }}
           >
-            No templates yet. Create one to get started!
+             No templates yet. Create one to get started!
           </Text>
         )}
 

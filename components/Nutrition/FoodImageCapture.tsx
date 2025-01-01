@@ -48,10 +48,10 @@ const ReviewScreen: React.FC<ReviewScreenProps> = ({
 
     setIsAnalyzing(true);
     try {
-      const analyzedMeal = await imageAnalysisService.analyzeFoodWithFeedback(
+      const analyzedMeal = await imageAnalysisService.analyzeFoodWithFeedback({
+        feedback,
         imageUri,
-        feedback
-      );
+      });
 
       // Create a new meal entry with the analyzed data
       const mealEntry: MealEntry = {
@@ -204,8 +204,13 @@ export default function FoodImageCapture({ visible, onAnalysisComplete, onClose 
         quality: 0.7,
         base64: true,
       });
-      setCapturedImage(photo!.uri);
-      await analyzeImage(photo!.uri);
+
+      if (!photo) {
+        throw new Error('Failed to capture photo');
+      }
+
+      setCapturedImage(photo.uri);
+      await analyzeImage(photo.uri);
     } catch (error) {
       console.error('Error taking picture:', error);
       ToastAndroid.show('Failed to capture image. Please try again.', ToastAndroid.SHORT);

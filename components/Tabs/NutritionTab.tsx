@@ -1,29 +1,19 @@
 import React, { useState, useCallback } from 'react';
-import { View, FlatList, Alert } from 'react-native';
+import { View, FlatList, Alert, StyleSheet } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Surface, FAB, Text, useTheme } from 'react-native-paper';
-import { MealEntry, Ingredient, Macros } from '../../types/index';
+import { MealEntry } from '../../types/index';
 import { nutritionService } from '../../services/nutritionService';
-import AddMealModal from '../Nutrition/AddMealModal';
 import MealCard from '../Nutrition/MealCard';
-
-const calculateMealMacros = (ingredients: Ingredient[]): Macros => {
-  return ingredients.reduce((total, ing) => {
-    if (!ing.macros) return total;
-    return {
-      calories: (total.calories || 0) + (ing.macros.calories || 0),
-      protein: (total.protein || 0) + (ing.macros.protein || 0),
-      carbs: (total.carbs || 0) + (ing.macros.carbs || 0),
-      fat: (total.fat || 0) + (ing.macros.fat || 0),
-    };
-  }, {} as Macros);
-};
+import FoodImageCapture from '../Nutrition/FoodImageCapture';
+import ManualMealInput from '../Nutrition/ManualMealInput';
 
 export default function NutritionTab() {
   const theme = useTheme();
-  const [meals, setMeals] = useState<MealEntry[]>([]);
-  const [showAddMeal, setShowAddMeal] = useState(false);
-  const [selectedMeal, setSelectedMeal] = useState<MealEntry | null>(null);
+  const [meals, setMeals] = useState<MealEntry[] | null>(null);
+  const [showManualInput, setShowManualInput] = useState(false);
+  const [showCamera, setShowCamera] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const loadMeals = useCallback(async () => {
     const today = new Date();
@@ -39,33 +29,15 @@ export default function NutritionTab() {
 
   const handleAddMeal = async (mealData: Omit<MealEntry, 'id' | 'date'>) => {
     try {
-      if (selectedMeal) {
-        await nutritionService.updateMealEntry({
-          ...selectedMeal,
-          ...mealData,
-        });
-      } else {
-        await nutritionService.addMealEntry({
-          ...mealData,
-          date: new Date(),
-        });
-      }
-      setSelectedMeal(null);
+      await nutritionService.addMealEntry({
+        ...mealData,
+        date: new Date(),
+      });
       loadMeals();
     } catch (error) {
       console.error('Error saving meal:', error);
       Alert.alert('Error', 'Failed to save meal');
     }
-  };
-
-  const handleEditMeal = (meal: MealEntry) => {
-    setSelectedMeal(meal);
-    setShowAddMeal(true);
-  };
-
-  const handleCloseModal = () => {
-    setSelectedMeal(null);
-    setShowAddMeal(false);
   };
 
   const renderMeal = ({ item }: { item: MealEntry }) => (
@@ -77,55 +49,102 @@ export default function NutritionTab() {
   );
 
   return (
-    <Surface style={{ flex: 1 }}>
+    <Surface style={styles.container}>
+      {meals &&
       <FlatList
         data={meals}
         renderItem={renderMeal}
         keyExtractor={item => item.id}
-        contentContainerStyle={{
-          padding: 16,
-          paddingBottom: 80, // Space for FAB
-        }}
+        contentContainerStyle={styles.listContent}
         ListEmptyComponent={
           <Text
             variant="bodyLarge"
-            style={{
-              textAlign: 'center',
-              marginTop: 24,
-              opacity: 0.7,
-            }}
+            style={styles.emptyText}
           >
             No meals recorded today
           </Text>
         }
       />
+    }
 
-      <FAB
-        icon="plus"
-        label="Add Meal"
-        onPress={() => setShowAddMeal(true)}
-        style={{
-          position: 'absolute',
-          margin: 16,
-          right: 0,
-          bottom: 0,
-        }}
-      />
+      <View style={styles.fabContainer}>
+        {isExpanded && (
+          <>
+            <FAB
+              icon="camera"
+              label="Take Photo"
+              onPress={() => {
+                setIsExpanded(false);
+                setShowCamera(true);
+              }}
+              style={[styles.fab, { backgroundColor: theme.colors.primaryContainer }]}
+            />
+            <FAB
+              icon="pencil"
+              label="Manual Input"
+              onPress={() => {
+                setIsExpanded(false);
+                setShowManualInput(true);
+              }}
+              style={[styles.fab, { backgroundColor: theme.colors.primaryContainer }]}
+            />
+          </>
+        )}
+        <FAB
+          icon={isExpanded ? "close" : "plus"}
+          label={isExpanded ? "Close" : "Add Meal"}
+          style={[styles.fab]}
+          onPress={() => setIsExpanded(!isExpanded)}
+          customSize={56}
+        />
+      </View>
 
-      <AddMealModal
-        visible={showAddMeal}
-        onClose={handleCloseModal}
-        onSave={handleAddMeal}
-        initialMeal={
-          selectedMeal
-            ? {
-                name: selectedMeal.name,
-                ingredients: selectedMeal.ingredients,
-                notes: selectedMeal.notes,
-              }
-            : undefined
-        }
-      />
+      {showManualInput && (
+        <ManualMealInput
+          visible={showManualInput}
+          onClose={() => {
+            setShowManualInput(false);
+            setIsExpanded(false);
+          }}
+          onAnalysisComplete={handleAddMeal}
+        />
+      )}
+
+      {showCamera && (
+        <FoodImageCapture
+          onAnalysisComplete={handleAddMeal}
+          onClose={() => {
+            setShowCamera(false);
+            setIsExpanded(false);
+          }}
+          visible={showCamera}
+        />
+      )}
     </Surface>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  listContent: {
+    padding: 16,
+    paddingBottom: 80,
+  },
+  emptyText: {
+    textAlign: 'center',
+    marginTop: 24,
+    opacity: 0.7,
+  },
+  fabContainer: {
+    position: 'absolute',
+    right: 16,
+    bottom: 16,
+    alignItems: 'flex-end',
+    gap: 16,
+  },
+  fab: {
+    elevation: 2,
+  },
+});

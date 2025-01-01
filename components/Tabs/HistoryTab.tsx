@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { ScrollView, Alert } from 'react-native';
-import { Calendar } from 'react-native-calendars';
+import { Calendar, DateData } from 'react-native-calendars';
 import {
   Surface,
   Text,
@@ -17,6 +17,7 @@ import ExerciseHistoryList from '../Workout/ExerciseHistoryList';
 import { workoutService } from '@/services/workoutService';
 import MealCard from '../Nutrition/MealCard';
 import WorkoutCard from '../Workout/WorkoutCard';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface Props {
   workouts: Workout[];
@@ -78,23 +79,81 @@ interface CalendarDayInfo {
   timestamp: number;
 }
 
+const STORAGE_KEYS = {
+  SELECTED_DATE: 'selected_history_date',
+};
+
+const useInitialDate = () => {
+  const [initialDate, setInitialDate] = useState<Date | null>(null);
+
+  useEffect(() => {
+    const loadSavedDate = async () => {
+      try {
+        const savedDate = await AsyncStorage.getItem(STORAGE_KEYS.SELECTED_DATE);
+        setInitialDate(savedDate ? new Date(savedDate) : new Date());
+      } catch (error) {
+        console.error('Error loading saved date:', error);
+        setInitialDate(new Date());
+      }
+    };
+    loadSavedDate();
+  }, []);
+
+  return initialDate;
+};
+
 export default function HistoryTab({ workouts, exercises, historyView, setHistoryView }: Props) {
   const theme = useTheme();
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const initialDate = useInitialDate();
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedDateMeals, setSelectedDateMeals] = useState<MealEntry[]>([]);
   const [selectedDateWorkouts, setSelectedDateWorkouts] = useState<Workout[]>([]);
   const [isCalendarVisible, setIsCalendarVisible] = useState(false);
 
-  const loadDayData = useCallback(async (date: Date) => {
-    const meals = await nutritionService.getMealsByDate(date);
-    const workouts = await workoutService.getWorkoutsByDate(date);
-    setSelectedDateMeals(meals);
-    setSelectedDateWorkouts(workouts);
-  }, [workouts]);
-
+  // Update selectedDate when initialDate is loaded
   useEffect(() => {
-    loadDayData(selectedDate);
+    if (initialDate) {
+      setSelectedDate(initialDate);
+    }
+  }, [initialDate]);
+
+
+  const loadDayData = useCallback(async (date: Date) => {
+    try {
+      const [meals, workouts] = await Promise.all([
+        nutritionService.getMealsByDate(date),
+        workoutService.getWorkoutsByDate(date)
+      ]);
+      setSelectedDateMeals(meals);
+      setSelectedDateWorkouts(workouts);
+    } catch (error) {
+      console.error('Error loading day data:', error);
+      Alert.alert('Error', 'Failed to load data for selected date');
+    }
+  }, []);
+
+  // Only load data when selectedDate is set
+  useEffect(() => {
+    if (selectedDate) {
+      loadDayData(selectedDate);
+    }
   }, [selectedDate, loadDayData]);
+
+  // Remove the initial date loading from here since we're doing it in the custom hook
+  const handleDateChange = async (date: Date) => {
+    try {
+      await AsyncStorage.setItem(STORAGE_KEYS.SELECTED_DATE, date.toISOString());
+      setSelectedDate(date);
+    } catch (error) {
+      console.error('Error saving selected date:', error);
+    }
+  };
+
+  // Don't render anything until we have the initial date
+  if (!initialDate || !selectedDate) {
+    return null;
+  }
+
 
   const getMarkedDates = () => {
     const markedDates: MarkedDates = {};
@@ -116,6 +175,10 @@ export default function HistoryTab({ workouts, exercises, historyView, setHistor
   };
 
   const renderWorkouts = () => {
+    // Don't render anything until we have the data
+    if (!selectedDateWorkouts) return null;
+
+    // Only render the section if we have workouts
     if (selectedDateWorkouts.length === 0) return null;
 
     return (
@@ -138,6 +201,10 @@ export default function HistoryTab({ workouts, exercises, historyView, setHistor
   };
 
   const renderNutrition = () => {
+    // Don't render anything until we have the data
+    if (!selectedDateMeals) return null;
+
+    // Only render the section if we have meals
     if (selectedDateMeals.length === 0) return null;
 
     const totalMacros = selectedDateMeals.reduce((total: Macros, meal: MealEntry) => {
@@ -174,7 +241,11 @@ export default function HistoryTab({ workouts, exercises, historyView, setHistor
     <ScrollView style={{ flex: 1, padding: 16 }}>
       {renderWorkouts()}
       {renderNutrition()}
-      {selectedDateWorkouts.length === 0 && selectedDateMeals.length === 0 && (
+      {/* Only show "No activity" message when we have both datasets and both are empty */}
+      {selectedDateWorkouts &&
+       selectedDateMeals &&
+       selectedDateWorkouts.length === 0 &&
+       selectedDateMeals.length === 0 && (
         <Text
           variant="bodyLarge"
           style={{
@@ -229,16 +300,17 @@ export default function HistoryTab({ workouts, exercises, historyView, setHistor
 
           {isCalendarVisible && (
             <Calendar
-              onDayPress={(day: CalendarDayInfo) => {
-                const newDate = new Date(day.timestamp);
-                setSelectedDate(newDate);
+              current={selectedDate.toISOString()}
+              markedDates={getMarkedDates()}
+              onDayPress={(day: DateData) => {
+                const date = new Date(day.timestamp);
+                handleDateChange(date);
                 setIsCalendarVisible(false);
               }}
-              markedDates={getMarkedDates()}
               theme={{
-                todayTextColor: theme.colors.primary,
                 selectedDayBackgroundColor: theme.colors.primary,
-                dotColor: theme.colors.primary,
+                todayTextColor: theme.colors.primary,
+                arrowColor: theme.colors.primary,
               }}
             />
           )}

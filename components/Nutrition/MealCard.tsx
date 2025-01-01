@@ -68,13 +68,18 @@ export default function MealCard({ meal, onDeleted, onEdited }: Props) {
           <Image
             source={{ uri: meal.imageUri }}
             style={styles.thumbnailImage}
+            resizeMode="cover"
           />
         ) : (
-          <View style={[styles.thumbnailImage, { backgroundColor: theme.colors.surfaceVariant }]} />
+          <View style={[styles.thumbnailImage, { backgroundColor: theme.colors.surfaceVariant, alignItems: 'center', justifyContent: 'center' }]}>
+            <IconButton icon="food-variant" size={50} style={{ backgroundColor: theme.colors.surface }} />
+          </View>
         )}
         <View style={styles.content}>
           <View style={styles.header}>
-            <Text variant="titleMedium" numberOfLines={1}>{meal.name}</Text>
+            <View style={{ flex: 1, marginRight: 8 }}>
+              <Text variant="titleSmall" numberOfLines={1} ellipsizeMode="tail">{meal.name}</Text>
+            </View>
             <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
               {format(new Date(meal.date), 'HH:mm')}
             </Text>

@@ -20,6 +20,8 @@ import { MealEntry, Ingredient } from '@/types/index';
 import FoodImageCapture from '@/components/Nutrition/FoodImageCapture';
 import IngredientList from '@/components/Nutrition/IngredientList';
 import IngredientForm from '@/components/Nutrition/IngredientForm';
+import { imageAnalysisService, AnalyzedMeal } from '@/services/imageAnalysisService';
+import ReviewScreen from './ReviewScreen';
 
 interface Props {
   visible: boolean;
@@ -34,7 +36,11 @@ export default function AddMealModal({ visible, onClose, onSave, initialMeal }: 
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [notes, setNotes] = useState('');
   const [showCamera, setShowCamera] = useState(false);
-  const [showIngredientForm, setShowIngredientForm] = useState(false);
+  const [showManualInput, setShowManualInput] = useState(false);
+  const [showReview, setShowReview] = useState(false);
+  const [manualDescription, setManualDescription] = useState('');
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [currentAnalysis, setCurrentAnalysis] = useState<MealEntry | null>(null);
   const [addMethod, setAddMethod] = useState('camera');
 
   useEffect(() => {
@@ -49,9 +55,48 @@ export default function AddMealModal({ visible, onClose, onSave, initialMeal }: 
     }
   }, [initialMeal]);
 
-  const handleAddIngredient = (ingredient: Ingredient) => {
-    setIngredients(prev => [...prev, ingredient]);
-    setShowIngredientForm(false);
+  const handleManualAnalysis = async () => {
+    if (!manualDescription.trim()) {
+      Alert.alert('Error', 'Please enter a meal description');
+      return;
+    }
+
+    setIsAnalyzing(true);
+    try {
+      const analyzedMeal = await imageAnalysisService.analyzeFood(undefined, manualDescription);
+      const mealEntry: MealEntry = {
+        id: Date.now().toString(),
+        name: analyzedMeal.name,
+        date: new Date(),
+        ingredients: analyzedMeal.ingredients,
+        notes: '',
+      };
+      setCurrentAnalysis(mealEntry);
+      setShowReview(true);
+      setShowManualInput(false);
+    } catch (error) {
+      console.error('Error analyzing meal description:', error);
+      Alert.alert('Error', error instanceof Error ? error.message : 'Failed to analyze meal description');
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  const handleAnalysisAccepted = (analysis: MealEntry) => {
+    if (!name) {
+      setName(analysis.name);
+    }
+    setIngredients(prev => [...prev, ...analysis.ingredients]);
+    setShowReview(false);
+    setCurrentAnalysis(null);
+  };
+
+  const handleAddClick = () => {
+    if (addMethod === 'camera') {
+      setShowCamera(true);
+    } else {
+      setShowManualInput(true);
+    }
   };
 
   const handleSave = () => {
@@ -64,6 +109,7 @@ export default function AddMealModal({ visible, onClose, onSave, initialMeal }: 
       name,
       ingredients,
       notes,
+      multiplier: initialMeal?.multiplier || 1,
     });
 
     setName('');
@@ -86,14 +132,6 @@ export default function AddMealModal({ visible, onClose, onSave, initialMeal }: 
 
   const handleDeleteIngredient = (index: number) => {
     setIngredients(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const handleAddClick = () => {
-    if (addMethod === 'camera') {
-      setShowCamera(true);
-    } else {
-      setShowIngredientForm(true);
-    }
   };
 
   return (
@@ -193,24 +231,80 @@ export default function AddMealModal({ visible, onClose, onSave, initialMeal }: 
             </Card.Content>
           </Card>
         </Surface>
-
-        {showCamera && (
-          <FoodImageCapture
-            onAnalysisComplete={handleAnalysisComplete}
-            onClose={() => setShowCamera(false)}
-            visible={showCamera}
-          />
-        )}
-
-        {showIngredientForm && (
-          <IngredientForm
-            visible={showIngredientForm}
-            onClose={() => setShowIngredientForm(false)}
-            onSave={handleAddIngredient}
-            mode="add"
-          />
-        )}
       </Modal>
+
+      <Portal>
+        <Modal
+          visible={showManualInput}
+          onDismiss={() => setShowManualInput(false)}
+          contentContainerStyle={styles.manualInputModal}
+        >
+          <Surface style={styles.manualInputSurface}>
+            <View style={styles.header}>
+              <Text variant="headlineSmall">Describe Your Meal</Text>
+              <IconButton
+                icon="close"
+                onPress={() => setShowManualInput(false)}
+                mode="contained-tonal"
+                size={20}
+              />
+            </View>
+
+            <TextInput
+              mode="outlined"
+              value={manualDescription}
+              onChangeText={setManualDescription}
+              placeholder="E.g., A large bowl of spaghetti bolognese with grated parmesan"
+              multiline
+              numberOfLines={4}
+              style={{ marginVertical: 16 }}
+            />
+
+            <Button
+              mode="contained"
+              onPress={handleManualAnalysis}
+              loading={isAnalyzing}
+              disabled={isAnalyzing || !manualDescription.trim()}
+            >
+              Analyze Meal
+            </Button>
+          </Surface>
+        </Modal>
+      </Portal>
+
+      {showCamera && (
+        <FoodImageCapture
+          onAnalysisComplete={handleAnalysisComplete}
+          onClose={() => setShowCamera(false)}
+          visible={showCamera}
+        />
+      )}
+
+      <Portal>
+        {showReview && currentAnalysis && (
+          <Modal
+            visible={showReview}
+            onDismiss={() => {
+              setShowReview(false);
+              setCurrentAnalysis(null);
+              setManualDescription('');
+            }}
+            contentContainerStyle={styles.fullScreenModal}
+          >
+            <ReviewScreen
+              visible={showReview}
+              description={manualDescription}
+              initialAnalysis={currentAnalysis}
+              onAccept={handleAnalysisAccepted}
+              onClose={() => {
+                setShowReview(false);
+                setCurrentAnalysis(null);
+                setManualDescription('');
+              }}
+            />
+          </Modal>
+        )}
+      </Portal>
     </>
   );
 }
@@ -280,5 +374,20 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     marginHorizontal: 8,
+  },
+  manualInputModal: {
+    margin: 16,
+  },
+  manualInputSurface: {
+    padding: 20,
+    borderRadius: 28,
+  },
+  reviewModal: {
+    margin: 0,
+    height: '100%',
+  },
+  fullScreenModal: {
+    margin: 0,
+    height: '100%',
   },
 });
