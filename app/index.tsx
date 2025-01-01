@@ -1,4 +1,4 @@
-import { Redirect } from 'expo-router';
+import { Redirect } from "expo-router";
 
 function Index() {
   return <Redirect href="/(tabs)/today" />;

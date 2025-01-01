@@ -1,5 +1,5 @@
-import { Surface } from 'react-native-paper';
-import NutritionTab from '../../components/Tabs/NutritionTab';
+import { Surface } from "react-native-paper";
+import NutritionTab from "../../components/Tabs/NutritionTab";
 
 export default function Nutrition() {
   return (

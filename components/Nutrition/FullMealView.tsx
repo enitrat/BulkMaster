@@ -1,12 +1,24 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, Image, Alert } from 'react-native';
-import { Text, IconButton, useTheme, Surface, Portal, Divider, Card, List, Avatar, TextInput, Button } from 'react-native-paper';
-import { MealEntry, Ingredient, Macros } from '@/types/index';
-import { format } from 'date-fns';
-import { router } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { nutritionService } from '@/services/nutritionService';
+import React, { useState } from "react";
+import { View, StyleSheet, ScrollView, Image, Alert } from "react-native";
+import {
+  Text,
+  IconButton,
+  useTheme,
+  Surface,
+  Portal,
+  Divider,
+  Card,
+  List,
+  Avatar,
+  TextInput,
+  Button,
+} from "react-native-paper";
+import { MealEntry, Ingredient, Macros } from "@/types/index";
+import { format } from "date-fns";
+import { router } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { nutritionService } from "@/services/nutritionService";
 
 interface Props {
   meal: MealEntry;
@@ -20,7 +32,11 @@ interface IngredientItemProps {
   onDelete: () => void;
 }
 
-const IngredientItem: React.FC<IngredientItemProps> = ({ ingredient, onWeightChange, onDelete }) => {
+const IngredientItem: React.FC<IngredientItemProps> = ({
+  ingredient,
+  onWeightChange,
+  onDelete,
+}) => {
   const { colors } = useTheme();
   const [isEditing, setIsEditing] = useState(false);
   const [weight, setWeight] = useState(ingredient.weight.toString());
@@ -34,7 +50,12 @@ const IngredientItem: React.FC<IngredientItemProps> = ({ ingredient, onWeightCha
   };
 
   return (
-    <Card style={[styles.ingredientCard, { backgroundColor: colors.surfaceVariant }]}>
+    <Card
+      style={[
+        styles.ingredientCard,
+        { backgroundColor: colors.surfaceVariant },
+      ]}
+    >
       <Card.Content style={styles.ingredientContent}>
         <View style={styles.ingredientMain}>
           <IconButton
@@ -83,7 +104,10 @@ const IngredientItem: React.FC<IngredientItemProps> = ({ ingredient, onWeightCha
               </View>
             </>
           ) : (
-            <Text variant="bodyMedium" style={{ color: colors.onSurfaceVariant }}>
+            <Text
+              variant="bodyMedium"
+              style={{ color: colors.onSurfaceVariant }}
+            >
               {ingredient.weight}g
             </Text>
           )}
@@ -93,11 +117,11 @@ const IngredientItem: React.FC<IngredientItemProps> = ({ ingredient, onWeightCha
   );
 };
 
-const MacroWithIcon: React.FC<{ icon: string; value: number; unit?: string }> = ({
-  icon,
-  value,
-  unit = 'g'
-}) => {
+const MacroWithIcon: React.FC<{
+  icon: string;
+  value: number;
+  unit?: string;
+}> = ({ icon, value, unit = "g" }) => {
   const { colors } = useTheme();
 
   return (
@@ -111,12 +135,17 @@ const MacroWithIcon: React.FC<{ icon: string; value: number; unit?: string }> = 
         />
         <View style={styles.macroContent}>
           <Text variant="labelSmall" style={{ color: colors.onSurfaceVariant }}>
-            {icon === 'arm-flex' ? 'Protein' :
-              icon === 'barley' ? 'Carbs' :
-              icon === 'oil' ? 'Fat' : 'Calories'}
+            {icon === "arm-flex"
+              ? "Protein"
+              : icon === "barley"
+                ? "Carbs"
+                : icon === "oil"
+                  ? "Fat"
+                  : "Calories"}
           </Text>
           <Text variant="bodyMedium" style={{ color: colors.primary }}>
-            {Math.round(value)}{unit}
+            {Math.round(value)}
+            {unit}
           </Text>
         </View>
       </Card.Content>
@@ -139,18 +168,23 @@ export default function FullMealView({ meal, onEdited, onDeleted }: Props) {
     };
   }, {} as Macros);
 
-  const handleIngredientWeightChange = async (index: number, newWeight: number) => {
+  const handleIngredientWeightChange = async (
+    index: number,
+    newWeight: number,
+  ) => {
     try {
       const ingredient = meal.ingredients[index];
       const weightRatio = newWeight / ingredient.weight;
 
       // Scale all macros proportionally
-      const updatedMacros = ingredient.macros ? {
-        calories: (ingredient.macros.calories || 0) * weightRatio,
-        protein: (ingredient.macros.protein || 0) * weightRatio,
-        carbs: (ingredient.macros.carbs || 0) * weightRatio,
-        fat: (ingredient.macros.fat || 0) * weightRatio,
-      } : undefined;
+      const updatedMacros = ingredient.macros
+        ? {
+            calories: (ingredient.macros.calories || 0) * weightRatio,
+            protein: (ingredient.macros.protein || 0) * weightRatio,
+            carbs: (ingredient.macros.carbs || 0) * weightRatio,
+            fat: (ingredient.macros.fat || 0) * weightRatio,
+          }
+        : undefined;
 
       const updatedIngredients = [...meal.ingredients];
       updatedIngredients[index] = {
@@ -165,8 +199,8 @@ export default function FullMealView({ meal, onEdited, onDeleted }: Props) {
       });
       onEdited?.();
     } catch (error) {
-      console.error('Error updating ingredient:', error);
-      Alert.alert('Error', 'Failed to update ingredient');
+      console.error("Error updating ingredient:", error);
+      Alert.alert("Error", "Failed to update ingredient");
     }
   };
 
@@ -179,8 +213,8 @@ export default function FullMealView({ meal, onEdited, onDeleted }: Props) {
       });
       onEdited?.();
     } catch (error) {
-      console.error('Error deleting ingredient:', error);
-      Alert.alert('Error', 'Failed to delete ingredient');
+      console.error("Error deleting ingredient:", error);
+      Alert.alert("Error", "Failed to delete ingredient");
     }
   };
 
@@ -188,15 +222,21 @@ export default function FullMealView({ meal, onEdited, onDeleted }: Props) {
     if (newMultiplier < 1) return;
 
     try {
-      const updatedIngredients = meal.ingredients.map(ingredient => ({
+      const updatedIngredients = meal.ingredients.map((ingredient) => ({
         ...ingredient,
         weight: (ingredient.weight / multiplier) * newMultiplier,
-        macros: ingredient.macros ? {
-          calories: ((ingredient.macros.calories || 0) / multiplier) * newMultiplier,
-          protein: ((ingredient.macros.protein || 0) / multiplier) * newMultiplier,
-          carbs: ((ingredient.macros.carbs || 0) / multiplier) * newMultiplier,
-          fat: ((ingredient.macros.fat || 0) / multiplier) * newMultiplier,
-        } : undefined
+        macros: ingredient.macros
+          ? {
+              calories:
+                ((ingredient.macros.calories || 0) / multiplier) *
+                newMultiplier,
+              protein:
+                ((ingredient.macros.protein || 0) / multiplier) * newMultiplier,
+              carbs:
+                ((ingredient.macros.carbs || 0) / multiplier) * newMultiplier,
+              fat: ((ingredient.macros.fat || 0) / multiplier) * newMultiplier,
+            }
+          : undefined,
       }));
 
       await nutritionService.updateMealEntry({
@@ -207,8 +247,8 @@ export default function FullMealView({ meal, onEdited, onDeleted }: Props) {
       setMultiplier(newMultiplier);
       onEdited?.();
     } catch (error) {
-      console.error('Error updating multiplier:', error);
-      Alert.alert('Error', 'Failed to update portions');
+      console.error("Error updating multiplier:", error);
+      Alert.alert("Error", "Failed to update portions");
     }
   };
 
@@ -217,7 +257,7 @@ export default function FullMealView({ meal, onEdited, onDeleted }: Props) {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={{ flex: 1 }} edges={["top", "left", "right"]}>
       <StatusBar style="light" />
       <Surface style={styles.container}>
         <View style={styles.header}>
@@ -238,7 +278,13 @@ export default function FullMealView({ meal, onEdited, onDeleted }: Props) {
           </View>
         </View>
 
-        <View style={{ height: 300, width: '100%', backgroundColor: colors.surfaceVariant }}>
+        <View
+          style={{
+            height: 300,
+            width: "100%",
+            backgroundColor: colors.surfaceVariant,
+          }}
+        >
           {meal.imageUri ? (
             <Image
               source={{ uri: meal.imageUri }}
@@ -265,20 +311,34 @@ export default function FullMealView({ meal, onEdited, onDeleted }: Props) {
             <View style={styles.content}>
               <Card style={styles.titleCard}>
                 <Card.Content>
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      alignItems: "flex-start",
+                      gap: 8,
+                    }}
+                  >
                     <View style={{ flex: 1 }}>
-                      <Text variant="headlineMedium" numberOfLines={2}>{meal.name}</Text>
-                      <Text variant="titleMedium" style={{ color: colors.onSurfaceVariant }}>
-                        {format(new Date(meal.date), 'PPP HH:mm')}
+                      <Text variant="headlineMedium" numberOfLines={2}>
+                        {meal.name}
+                      </Text>
+                      <Text
+                        variant="titleMedium"
+                        style={{ color: colors.onSurfaceVariant }}
+                      >
+                        {format(new Date(meal.date), "PPP HH:mm")}
                       </Text>
                     </View>
-                    <View style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      backgroundColor: colors.surfaceVariant,
-                      borderRadius: 20,
-                      height: 40,
-                    }}>
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        backgroundColor: colors.surfaceVariant,
+                        borderRadius: 20,
+                        height: 40,
+                      }}
+                    >
                       <IconButton
                         icon="minus"
                         size={20}
@@ -286,7 +346,10 @@ export default function FullMealView({ meal, onEdited, onDeleted }: Props) {
                         disabled={multiplier <= 1}
                         style={{ margin: 0, width: 32 }}
                       />
-                      <Text variant="titleMedium" style={{ minWidth: 24, textAlign: 'center' }}>
+                      <Text
+                        variant="titleMedium"
+                        style={{ minWidth: 24, textAlign: "center" }}
+                      >
                         {multiplier}x
                       </Text>
                       <IconButton
@@ -302,13 +365,17 @@ export default function FullMealView({ meal, onEdited, onDeleted }: Props) {
 
               <Card style={styles.sectionCard}>
                 <Card.Content>
-                  <List.Subheader style={styles.sectionTitle}>Ingredients</List.Subheader>
+                  <List.Subheader style={styles.sectionTitle}>
+                    Ingredients
+                  </List.Subheader>
                   <View style={styles.ingredientsList}>
                     {meal.ingredients.map((ingredient, index) => (
                       <IngredientItem
                         key={index}
                         ingredient={ingredient}
-                        onWeightChange={(weight) => handleIngredientWeightChange(index, weight)}
+                        onWeightChange={(weight) =>
+                          handleIngredientWeightChange(index, weight)
+                        }
                         onDelete={() => handleIngredientDelete(index)}
                       />
                     ))}
@@ -318,7 +385,9 @@ export default function FullMealView({ meal, onEdited, onDeleted }: Props) {
 
               <Card style={styles.sectionCard}>
                 <Card.Content>
-                  <List.Subheader style={styles.sectionTitle}>Nutrition</List.Subheader>
+                  <List.Subheader style={styles.sectionTitle}>
+                    Nutrition
+                  </List.Subheader>
                   <View style={styles.macrosContainer}>
                     <View style={styles.macrosRow}>
                       <MacroWithIcon
@@ -327,24 +396,15 @@ export default function FullMealView({ meal, onEdited, onDeleted }: Props) {
                         unit="kcal"
                       />
                       {macros.protein && (
-                        <MacroWithIcon
-                          icon="arm-flex"
-                          value={macros.protein}
-                        />
+                        <MacroWithIcon icon="arm-flex" value={macros.protein} />
                       )}
                     </View>
                     <View style={styles.macrosRow}>
                       {macros.carbs && (
-                        <MacroWithIcon
-                          icon="barley"
-                          value={macros.carbs}
-                        />
+                        <MacroWithIcon icon="barley" value={macros.carbs} />
                       )}
                       {macros.fat && (
-                        <MacroWithIcon
-                          icon="oil"
-                          value={macros.fat}
-                        />
+                        <MacroWithIcon icon="oil" value={macros.fat} />
                       )}
                     </View>
                   </View>
@@ -354,8 +414,13 @@ export default function FullMealView({ meal, onEdited, onDeleted }: Props) {
               {meal.notes && (
                 <Card style={styles.sectionCard}>
                   <Card.Content>
-                    <List.Subheader style={styles.sectionTitle}>Notes</List.Subheader>
-                    <Text variant="bodyLarge" style={{ color: colors.onSurfaceVariant }}>
+                    <List.Subheader style={styles.sectionTitle}>
+                      Notes
+                    </List.Subheader>
+                    <Text
+                      variant="bodyLarge"
+                      style={{ color: colors.onSurfaceVariant }}
+                    >
                       {meal.notes}
                     </Text>
                   </Card.Content>
@@ -374,31 +439,31 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: 0,
     right: 0,
     height: 56,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     zIndex: 2,
   },
   backButton: {
     marginLeft: 8,
   },
   headerActions: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginRight: 8,
   },
   image: {
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
   },
   placeholderContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   contentSurface: {
     flex: 1,
@@ -408,7 +473,7 @@ const styles = StyleSheet.create({
     elevation: 4,
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
-    backgroundColor: 'white',
+    backgroundColor: "white",
   },
   content: {
     padding: 16,
@@ -428,11 +493,11 @@ const styles = StyleSheet.create({
   macroCard: {
     flex: 1,
     elevation: 1,
-    maxWidth: '48%',
+    maxWidth: "48%",
   },
   macroContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 8,
     padding: 8,
   },
@@ -440,19 +505,19 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   caloriesContainer: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
+    flexDirection: "row",
+    alignItems: "baseline",
     gap: 4,
-    justifyContent: 'center',
+    justifyContent: "center",
     marginBottom: 16,
   },
   macrosContainer: {
-    width: '100%',
+    width: "100%",
     gap: 12,
   },
   macrosRow: {
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
+    flexDirection: "row",
+    justifyContent: "flex-start",
     gap: 12,
   },
   ingredientsList: {
@@ -462,15 +527,15 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   ingredientContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingVertical: 4,
     paddingHorizontal: 8,
   },
   ingredientMain: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     flex: 1,
   },
   editButton: {
@@ -478,23 +543,23 @@ const styles = StyleSheet.create({
   },
   weightSection: {
     minWidth: 180,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-end",
   },
   weightInput: {
-    backgroundColor: 'transparent',
+    backgroundColor: "transparent",
     width: 80,
     height: 40,
     marginRight: 8,
   },
   weightInputContent: {
-    backgroundColor: 'transparent',
+    backgroundColor: "transparent",
     height: 40,
   },
   editActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   actionButton: {
     margin: 0,

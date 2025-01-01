@@ -1,5 +1,5 @@
-import { Surface } from 'react-native-paper';
-import SettingsTab from '../../components/Tabs/SettingsTab';
+import { Surface } from "react-native-paper";
+import SettingsTab from "../../components/Tabs/SettingsTab";
 
 export default function Settings() {
   return (

@@ -1,12 +1,12 @@
 export enum ExerciseCategory {
-  CHEST = 'Chest',
-  BACK = 'Back',
-  LEGS = 'Legs',
-  SHOULDERS = 'Shoulders',
-  ARMS = 'Arms',
-  CORE = 'Core',
-  CARDIO = 'Cardio',
-  OTHER = 'Other',
+  CHEST = "Chest",
+  BACK = "Back",
+  LEGS = "Legs",
+  SHOULDERS = "Shoulders",
+  ARMS = "Arms",
+  CORE = "Core",
+  CARDIO = "Cardio",
+  OTHER = "Other",
 }
 
 export interface Exercise {
@@ -68,7 +68,7 @@ export interface MealEntry {
   multiplier?: number;
 }
 
-export type HistoryView = 'calendar' | 'exercises' | 'nutrition';
+export type HistoryView = "calendar" | "exercises" | "nutrition";
 
 export const BOTTOM_NAV_HEIGHT = 80;
 export const FAB_BOTTOM = 16;

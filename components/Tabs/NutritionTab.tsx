@@ -1,13 +1,13 @@
-import React, { useState, useCallback } from 'react';
-import { View, FlatList, Alert, StyleSheet } from 'react-native';
-import { useFocusEffect, router } from 'expo-router';
-import { Surface, FAB, Text, useTheme } from 'react-native-paper';
-import { BOTTOM_NAV_HEIGHT, FAB_BOTTOM, MealEntry } from '../../types/index';
-import { nutritionService } from '../../services/nutritionService';
-import MealCard from '../Nutrition/MealCard';
-import FoodImageCapture from '../Nutrition/FoodImageCapture';
-import ManualMealInput from '../Nutrition/ManualMealInput';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import React, { useState, useCallback } from "react";
+import { View, FlatList, Alert, StyleSheet } from "react-native";
+import { useFocusEffect, router } from "expo-router";
+import { Surface, FAB, Text, useTheme } from "react-native-paper";
+import { BOTTOM_NAV_HEIGHT, FAB_BOTTOM, MealEntry } from "../../types/index";
+import { nutritionService } from "../../services/nutritionService";
+import MealCard from "../Nutrition/MealCard";
+import FoodImageCapture from "../Nutrition/FoodImageCapture";
+import ManualMealInput from "../Nutrition/ManualMealInput";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function NutritionTab() {
   const theme = useTheme();
@@ -26,10 +26,10 @@ export default function NutritionTab() {
   useFocusEffect(
     useCallback(() => {
       loadMeals();
-    }, [loadMeals])
+    }, [loadMeals]),
   );
 
-  const handleAddMeal = async (mealData: Omit<MealEntry, 'id' | 'date'>) => {
+  const handleAddMeal = async (mealData: Omit<MealEntry, "id" | "date">) => {
     try {
       await nutritionService.addMealEntry({
         ...mealData,
@@ -37,18 +37,13 @@ export default function NutritionTab() {
       });
       loadMeals();
     } catch (error) {
-      console.error('Error saving meal:', error);
-      Alert.alert('Error', 'Failed to save meal');
+      console.error("Error saving meal:", error);
+      Alert.alert("Error", "Failed to save meal");
     }
   };
 
-
   const renderMeal = ({ item }: { item: MealEntry }) => (
-    <MealCard
-      meal={item}
-      onDeleted={loadMeals}
-      onEdited={loadMeals}
-    />
+    <MealCard meal={item} onDeleted={loadMeals} onEdited={loadMeals} />
   );
 
   return (
@@ -57,10 +52,10 @@ export default function NutritionTab() {
         <FlatList
           data={meals}
           renderItem={renderMeal}
-          keyExtractor={item => item.id}
+          keyExtractor={(item) => item.id}
           contentContainerStyle={[
             styles.listContent,
-            { paddingBottom: BOTTOM_NAV_HEIGHT + insets.bottom + 80 }
+            { paddingBottom: BOTTOM_NAV_HEIGHT + insets.bottom + 80 },
           ]}
           ListEmptyComponent={
             <Text variant="bodyLarge" style={styles.emptyText}>
@@ -70,10 +65,7 @@ export default function NutritionTab() {
         />
       )}
 
-      <View style={[
-        styles.fabContainer,
-        { bottom: FAB_BOTTOM }
-      ]}>
+      <View style={[styles.fabContainer, { bottom: FAB_BOTTOM }]}>
         {isExpanded && (
           <>
             <FAB
@@ -83,7 +75,10 @@ export default function NutritionTab() {
                 setIsExpanded(false);
                 setShowCamera(true);
               }}
-              style={[styles.fab, { backgroundColor: theme.colors.primaryContainer }]}
+              style={[
+                styles.fab,
+                { backgroundColor: theme.colors.primaryContainer },
+              ]}
             />
             <FAB
               icon="pencil"
@@ -92,7 +87,10 @@ export default function NutritionTab() {
                 setIsExpanded(false);
                 setShowManualInput(true);
               }}
-              style={[styles.fab, { backgroundColor: theme.colors.primaryContainer }]}
+              style={[
+                styles.fab,
+                { backgroundColor: theme.colors.primaryContainer },
+              ]}
             />
           </>
         )}
@@ -138,14 +136,14 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   emptyText: {
-    textAlign: 'center',
+    textAlign: "center",
     marginTop: 24,
     opacity: 0.7,
   },
   fabContainer: {
-    position: 'absolute',
+    position: "absolute",
     right: 16,
-    alignItems: 'flex-end',
+    alignItems: "flex-end",
     gap: 16,
   },
   fab: {

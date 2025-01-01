@@ -1,6 +1,6 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { View, Alert, ScrollView } from 'react-native';
-import { router, useLocalSearchParams, useFocusEffect } from 'expo-router';
+import React, { useEffect, useState, useCallback } from "react";
+import { View, Alert, ScrollView } from "react-native";
+import { router, useLocalSearchParams, useFocusEffect } from "expo-router";
 import {
   Surface,
   Text,
@@ -17,13 +17,18 @@ import {
   Appbar,
   TouchableRipple,
   ActivityIndicator,
-} from 'react-native-paper';
-import { Workout, WorkoutExercise, ExerciseSet, Exercise } from '../types/index';
-import { workoutService } from '../services/workoutService';
-import { templateService } from '../services/templateService';
-import { exerciseService } from '../services/exerciseService';
-import RestTimer from '@/components/Workout/RestTimer';
-import { SafeAreaView } from 'react-native-safe-area-context';
+} from "react-native-paper";
+import {
+  Workout,
+  WorkoutExercise,
+  ExerciseSet,
+  Exercise,
+} from "../types/index";
+import { workoutService } from "../services/workoutService";
+import { templateService } from "../services/templateService";
+import { exerciseService } from "../services/exerciseService";
+import RestTimer from "@/components/Workout/RestTimer";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 type SetModalProps = {
   visible: boolean;
@@ -55,9 +60,9 @@ const SetModal: React.FC<SetModalProps> = ({
 
   const handleWeightChange = (text: string) => {
     // Only allow numbers and decimal point
-    const filtered = text.replace(/[^0-9.]/g, '');
+    const filtered = text.replace(/[^0-9.]/g, "");
     // Prevent multiple decimal points
-    const parts = filtered.split('.');
+    const parts = filtered.split(".");
     if (parts.length > 2) {
       return;
     }
@@ -66,7 +71,7 @@ const SetModal: React.FC<SetModalProps> = ({
 
   const handleRepsChange = (text: string) => {
     // Only allow whole numbers
-    const filtered = text.replace(/[^0-9]/g, '');
+    const filtered = text.replace(/[^0-9]/g, "");
     setReps(filtered);
   };
 
@@ -89,7 +94,9 @@ const SetModal: React.FC<SetModalProps> = ({
           borderRadius: 12,
         }}
       >
-        <Text variant="titleLarge" style={{ marginBottom: 20 }}>{title}</Text>
+        <Text variant="titleLarge" style={{ marginBottom: 20 }}>
+          {title}
+        </Text>
 
         <TextInput
           mode="outlined"
@@ -112,9 +119,13 @@ const SetModal: React.FC<SetModalProps> = ({
           onSubmitEditing={handleSave}
         />
 
-        <View style={{ flexDirection: 'row', gap: 8, justifyContent: 'flex-end' }}>
+        <View
+          style={{ flexDirection: "row", gap: 8, justifyContent: "flex-end" }}
+        >
           <Button onPress={onClose}>Cancel</Button>
-          <Button mode="contained" onPress={handleSave}>Save</Button>
+          <Button mode="contained" onPress={handleSave}>
+            Save
+          </Button>
         </View>
       </Modal>
     </Portal>
@@ -128,7 +139,8 @@ export default function WorkoutInProgress() {
   const [availableExercises, setAvailableExercises] = useState<Exercise[]>([]);
   const [showExerciseList, setShowExerciseList] = useState(false);
   const [showSetModal, setShowSetModal] = useState(false);
-  const [selectedExerciseIndex, setSelectedExerciseIndex] = useState<number>(-1);
+  const [selectedExerciseIndex, setSelectedExerciseIndex] =
+    useState<number>(-1);
   const [showRestTimer, setShowRestTimer] = useState(false);
 
   const loadData = useCallback(async () => {
@@ -138,7 +150,7 @@ export default function WorkoutInProgress() {
       if (!activeWorkout) {
         if (templateId) {
           const template = await templateService.getTemplateById(templateId);
-          if (!template) throw new Error('Template not found');
+          if (!template) throw new Error("Template not found");
           activeWorkout = await workoutService.startWorkout(template);
         } else {
           activeWorkout = await workoutService.startWorkout();
@@ -151,8 +163,8 @@ export default function WorkoutInProgress() {
       const exercises = await exerciseService.getAllExercises();
       setAvailableExercises(exercises);
     } catch (error) {
-      console.error('Error loading workout data:', error);
-      Alert.alert('Error', 'Failed to load workout data');
+      console.error("Error loading workout data:", error);
+      Alert.alert("Error", "Failed to load workout data");
       router.back();
     }
   }, [templateId]);
@@ -160,7 +172,7 @@ export default function WorkoutInProgress() {
   useFocusEffect(
     useCallback(() => {
       loadData();
-    }, [loadData])
+    }, [loadData]),
   );
 
   const handleEditSet = (exerciseIndex: number) => {
@@ -174,18 +186,20 @@ export default function WorkoutInProgress() {
     const updatedWorkout = { ...workout };
     const exercise = updatedWorkout.exercises[selectedExerciseIndex];
 
-    exercise.sets = [{
-      weight,
-      reps,
-      completed: false,
-    }];
+    exercise.sets = [
+      {
+        weight,
+        reps,
+        completed: false,
+      },
+    ];
 
     try {
       await workoutService.updateActiveWorkout(updatedWorkout);
       setWorkout(updatedWorkout);
     } catch (error) {
-      console.error('Error saving set:', error);
-      Alert.alert('Error', 'Failed to save set');
+      console.error("Error saving set:", error);
+      Alert.alert("Error", "Failed to save set");
     }
   };
 
@@ -208,42 +222,72 @@ export default function WorkoutInProgress() {
       setWorkout(updatedWorkout);
       setShowExerciseList(false);
     } catch (error) {
-      console.error('Error adding exercise:', error);
-      Alert.alert('Error', 'Failed to add exercise');
+      console.error("Error adding exercise:", error);
+      Alert.alert("Error", "Failed to add exercise");
     }
   };
 
   const finishWorkout = async () => {
     try {
       await workoutService.completeWorkout();
-      Alert.alert('Success', 'Workout completed!', [
-        { text: 'OK', onPress: () => router.back() }
+      Alert.alert("Success", "Workout completed!", [
+        { text: "OK", onPress: () => router.back() },
       ]);
     } catch (error) {
-      console.error('Error completing workout:', error);
-      Alert.alert('Error', 'Failed to complete workout');
+      console.error("Error completing workout:", error);
+      Alert.alert("Error", "Failed to complete workout");
     }
   };
 
-  const renderExercise = ({ item: workoutExercise, index: exerciseIndex }: { item: WorkoutExercise; index: number }) => {
+  const renderExercise = ({
+    item: workoutExercise,
+    index: exerciseIndex,
+  }: {
+    item: WorkoutExercise;
+    index: number;
+  }) => {
     const set = workoutExercise.sets[0];
 
     return (
-      <Card style={{ margin: 8 }} key={`${workoutExercise.exercise.id}-${exerciseIndex}`}>
+      <Card
+        style={{ margin: 8 }}
+        key={`${workoutExercise.exercise.id}-${exerciseIndex}`}
+      >
         <Card.Title title={workoutExercise.exercise.name} />
         <Card.Content>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, paddingVertical: 8 }}>
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 16,
+              paddingVertical: 8,
+            }}
+          >
             <View style={{ flex: 1 }}>
-              <Text variant="labelMedium" style={{ color: theme.colors.onSurfaceVariant }}>Weight</Text>
+              <Text
+                variant="labelMedium"
+                style={{ color: theme.colors.onSurfaceVariant }}
+              >
+                Weight
+              </Text>
               <Text variant="titleMedium">{set?.weight || 0} kg</Text>
             </View>
             <View style={{ flex: 1 }}>
-              <Text variant="labelMedium" style={{ color: theme.colors.onSurfaceVariant }}>Reps</Text>
+              <Text
+                variant="labelMedium"
+                style={{ color: theme.colors.onSurfaceVariant }}
+              >
+                Reps
+              </Text>
               <Text variant="titleMedium">{set?.reps || 0}</Text>
             </View>
             <IconButton
-              icon={set?.completed ? 'check-circle' : 'circle-outline'}
-              iconColor={set?.completed ? theme.colors.primary : theme.colors.onSurfaceDisabled}
+              icon={set?.completed ? "check-circle" : "circle-outline"}
+              iconColor={
+                set?.completed
+                  ? theme.colors.primary
+                  : theme.colors.onSurfaceDisabled
+              }
               size={24}
               onPress={() => toggleSetCompletion(exerciseIndex)}
             />
@@ -260,7 +304,9 @@ export default function WorkoutInProgress() {
 
   if (!workout) {
     return (
-      <Surface style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <Surface
+        style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+      >
         <ActivityIndicator size="large" />
       </Surface>
     );
@@ -269,15 +315,18 @@ export default function WorkoutInProgress() {
   if (showExerciseList) {
     return (
       <Surface style={{ flex: 1 }}>
-        <SafeAreaView edges={['top']}>
+        <SafeAreaView edges={["top"]}>
           <Appbar.Header>
             <Appbar.Content title="Add Exercise" />
-            <Appbar.Action icon="close" onPress={() => setShowExerciseList(false)} />
+            <Appbar.Action
+              icon="close"
+              onPress={() => setShowExerciseList(false)}
+            />
           </Appbar.Header>
         </SafeAreaView>
 
         <ScrollView>
-          {availableExercises.map(exercise => (
+          {availableExercises.map((exercise) => (
             <List.Item
               key={exercise.id}
               title={exercise.name}
@@ -292,7 +341,7 @@ export default function WorkoutInProgress() {
 
   return (
     <Surface style={{ flex: 1 }}>
-      <SafeAreaView edges={['top']}>
+      <SafeAreaView edges={["top"]}>
         <Appbar.Header>
           <Appbar.BackAction onPress={() => router.back()} />
           <Appbar.Content title="Workout in Progress" />
@@ -307,12 +356,16 @@ export default function WorkoutInProgress() {
         <RestTimer onComplete={() => setShowRestTimer(false)} />
       ) : (
         <ScrollView style={{ flex: 1 }}>
-          {workout.exercises.map((exercise, index) => renderExercise({ item: exercise, index }))}
+          {workout.exercises.map((exercise, index) =>
+            renderExercise({ item: exercise, index }),
+          )}
         </ScrollView>
       )}
 
       <Card style={{ elevation: 0 }}>
-        <Card.Actions style={{ paddingHorizontal: 16, paddingVertical: 8, gap: 8 }}>
+        <Card.Actions
+          style={{ paddingHorizontal: 16, paddingVertical: 8, gap: 8 }}
+        >
           <Button
             mode="contained-tonal"
             icon="plus"
@@ -336,7 +389,9 @@ export default function WorkoutInProgress() {
         visible={showSetModal}
         onClose={() => setShowSetModal(false)}
         onSave={handleSaveSet}
-        initialWeight={workout.exercises[selectedExerciseIndex]?.sets[0]?.weight}
+        initialWeight={
+          workout.exercises[selectedExerciseIndex]?.sets[0]?.weight
+        }
         initialReps={workout.exercises[selectedExerciseIndex]?.sets[0]?.reps}
         title="Edit Exercise"
       />

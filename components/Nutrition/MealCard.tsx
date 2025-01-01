@@ -1,9 +1,9 @@
-import React from 'react';
-import { View, StyleSheet, Image } from 'react-native';
-import { Card, Text, IconButton, useTheme } from 'react-native-paper';
-import { MealEntry, Ingredient, Macros } from '../../types/index';
-import { format } from 'date-fns';
-import { router } from 'expo-router';
+import React from "react";
+import { View, StyleSheet, Image } from "react-native";
+import { Card, Text, IconButton, useTheme } from "react-native-paper";
+import { MealEntry, Ingredient, Macros } from "../../types/index";
+import { format } from "date-fns";
+import { router } from "expo-router";
 
 interface Props {
   meal: MealEntry;
@@ -19,7 +19,10 @@ const CollapsedMacros: React.FC<{ macros: Macros }> = ({ macros }) => {
       {macros.protein && (
         <View style={styles.macroWithIcon}>
           <IconButton icon="arm-flex" size={16} style={styles.macroIcon} />
-          <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+          <Text
+            variant="bodySmall"
+            style={{ color: theme.colors.onSurfaceVariant }}
+          >
             {Math.round(macros.protein)}g
           </Text>
         </View>
@@ -27,7 +30,10 @@ const CollapsedMacros: React.FC<{ macros: Macros }> = ({ macros }) => {
       {macros.carbs && (
         <View style={styles.macroWithIcon}>
           <IconButton icon="barley" size={16} style={styles.macroIcon} />
-          <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+          <Text
+            variant="bodySmall"
+            style={{ color: theme.colors.onSurfaceVariant }}
+          >
             {Math.round(macros.carbs)}g
           </Text>
         </View>
@@ -35,7 +41,10 @@ const CollapsedMacros: React.FC<{ macros: Macros }> = ({ macros }) => {
       {macros.fat && (
         <View style={styles.macroWithIcon}>
           <IconButton icon="oil" size={16} style={styles.macroIcon} />
-          <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+          <Text
+            variant="bodySmall"
+            style={{ color: theme.colors.onSurfaceVariant }}
+          >
             {Math.round(macros.fat)}g
           </Text>
         </View>
@@ -57,11 +66,10 @@ export default function MealCard({ meal, onDeleted, onEdited }: Props) {
     };
   }, {} as Macros);
 
-
   const handlePress = () => {
     router.push({
-      pathname: '/meal/[id]',
-      params: { id: meal.id }
+      pathname: "/meal/[id]",
+      params: { id: meal.id },
     });
   };
 
@@ -75,17 +83,35 @@ export default function MealCard({ meal, onDeleted, onEdited }: Props) {
             resizeMode="cover"
           />
         ) : (
-          <View style={[styles.thumbnailImage, { backgroundColor: theme.colors.surfaceVariant, alignItems: 'center', justifyContent: 'center' }]}>
-            <IconButton icon="food-variant" size={50} style={{ backgroundColor: theme.colors.surface }} />
+          <View
+            style={[
+              styles.thumbnailImage,
+              {
+                backgroundColor: theme.colors.surfaceVariant,
+                alignItems: "center",
+                justifyContent: "center",
+              },
+            ]}
+          >
+            <IconButton
+              icon="food-variant"
+              size={50}
+              style={{ backgroundColor: theme.colors.surface }}
+            />
           </View>
         )}
         <View style={styles.content}>
           <View style={styles.header}>
             <View style={{ flex: 1, marginRight: 8 }}>
-              <Text variant="titleSmall" numberOfLines={1} ellipsizeMode="tail">{meal.name}</Text>
+              <Text variant="titleSmall" numberOfLines={1} ellipsizeMode="tail">
+                {meal.name}
+              </Text>
             </View>
-            <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-              {format(new Date(meal.date), 'HH:mm')}
+            <Text
+              variant="bodySmall"
+              style={{ color: theme.colors.onSurfaceVariant }}
+            >
+              {format(new Date(meal.date), "HH:mm")}
             </Text>
           </View>
 
@@ -105,34 +131,34 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   container: {
-    flexDirection: 'row',
+    flexDirection: "row",
     height: 100,
   },
   thumbnailImage: {
-    width: '33%',
-    height: '100%',
+    width: "33%",
+    height: "100%",
     borderTopLeftRadius: 12,
     borderBottomLeftRadius: 12,
   },
   content: {
     flex: 1,
     padding: 12,
-    justifyContent: 'space-between',
+    justifyContent: "space-between",
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   collapsedMacros: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    alignItems: "center",
+    flexWrap: "wrap",
     gap: 12,
   },
   macroWithIcon: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   macroIcon: {
     margin: 0,

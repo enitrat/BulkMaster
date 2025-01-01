@@ -1,14 +1,17 @@
-import { Tabs } from 'expo-router';
-import { View } from 'react-native';
-import { useTheme, BottomNavigation } from 'react-native-paper';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useState } from 'react';
-import { router } from 'expo-router';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BOTTOM_NAV_HEIGHT } from '@/types';
+import { Tabs } from "expo-router";
+import { View } from "react-native";
+import { useTheme, BottomNavigation } from "react-native-paper";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useState } from "react";
+import { router } from "expo-router";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
+import { BOTTOM_NAV_HEIGHT } from "@/types";
 
 export const unstable_settings = {
-  initialRouteName: 'today',
+  initialRouteName: "today",
 };
 
 export default function TabLayout() {
@@ -17,24 +20,51 @@ export default function TabLayout() {
   const insets = useSafeAreaInsets();
 
   const routes = [
-    { key: 'today', title: 'Today', focusedIcon: 'calendar-today', unfocusedIcon: 'calendar-today' },
-    { key: 'workouts', title: 'Workouts', focusedIcon: 'dumbbell', unfocusedIcon: 'dumbbell' },
-    { key: 'nutrition', title: 'Nutrition', focusedIcon: 'food-apple', unfocusedIcon: 'food-apple' },
-    { key: 'history', title: 'History', focusedIcon: 'history', unfocusedIcon: 'history' },
-    { key: 'settings', title: 'Settings', focusedIcon: 'cog', unfocusedIcon: 'cog' },
+    {
+      key: "today",
+      title: "Today",
+      focusedIcon: "calendar-today",
+      unfocusedIcon: "calendar-today",
+    },
+    {
+      key: "workouts",
+      title: "Workouts",
+      focusedIcon: "dumbbell",
+      unfocusedIcon: "dumbbell",
+    },
+    {
+      key: "nutrition",
+      title: "Nutrition",
+      focusedIcon: "food-apple",
+      unfocusedIcon: "food-apple",
+    },
+    {
+      key: "history",
+      title: "History",
+      focusedIcon: "history",
+      unfocusedIcon: "history",
+    },
+    {
+      key: "settings",
+      title: "Settings",
+      focusedIcon: "cog",
+      unfocusedIcon: "cog",
+    },
   ];
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <View style={{ flex: 1 }}>
-        <View style={{
-          flex: 1,
-          paddingBottom: BOTTOM_NAV_HEIGHT + insets.bottom
-        }}>
+        <View
+          style={{
+            flex: 1,
+            paddingBottom: BOTTOM_NAV_HEIGHT + insets.bottom,
+          }}
+        >
           <Tabs
             screenOptions={{
               headerShown: false,
-              tabBarStyle: { display: 'none' },
+              tabBarStyle: { display: "none" },
             }}
             initialRouteName="today"
           >
@@ -46,16 +76,18 @@ export default function TabLayout() {
           </Tabs>
         </View>
 
-        <View style={{
-          position: 'absolute',
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: colors.background,
-        }}>
+        <View
+          style={{
+            position: "absolute",
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: colors.background,
+          }}
+        >
           <BottomNavigation
             navigationState={{ index, routes }}
-            onIndexChange={index => {
+            onIndexChange={(index) => {
               setIndex(index);
               router.push(`/(tabs)/${routes[index].key}` as any);
             }}
@@ -77,7 +109,7 @@ export default function TabLayout() {
             }}
             theme={{
               colors: {
-                secondaryContainer: 'transparent',
+                secondaryContainer: "transparent",
               },
             }}
           />
