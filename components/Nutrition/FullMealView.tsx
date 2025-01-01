@@ -6,7 +6,6 @@ import { format } from 'date-fns';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import AddMealModal from './AddMealModal';
 import { nutritionService } from '@/services/nutritionService';
 
 interface Props {
@@ -140,24 +139,6 @@ export default function FullMealView({ meal, onEdited, onDeleted }: Props) {
     };
   }, {} as Macros);
 
-  const handleEdit = () => {
-    setShowEditModal(true);
-  };
-
-  const handleSaveEdit = async (mealData: Omit<MealEntry, 'id' | 'date'>) => {
-    try {
-      await nutritionService.updateMealEntry({
-        ...meal,
-        ...mealData,
-      });
-      setShowEditModal(false);
-      onEdited?.();
-    } catch (error) {
-      console.error('Error updating meal:', error);
-      Alert.alert('Error', 'Failed to update meal');
-    }
-  };
-
   const handleIngredientWeightChange = async (index: number, newWeight: number) => {
     try {
       const ingredient = meal.ingredients[index];
@@ -245,12 +226,6 @@ export default function FullMealView({ meal, onEdited, onDeleted }: Props) {
           />
           <View style={styles.headerActions}>
             <IconButton
-              icon="pencil"
-              iconColor="white"
-              size={24}
-              onPress={handleEdit}
-            />
-            <IconButton
               icon="trash-can-outline"
               iconColor="white"
               size={24}
@@ -259,12 +234,22 @@ export default function FullMealView({ meal, onEdited, onDeleted }: Props) {
           </View>
         </View>
 
-        <View style={styles.imageContainer}>
-          <Image
-            source={{ uri: meal.imageUri }}
-            style={styles.image}
-            resizeMode="cover"
-          />
+        <View style={{ height: 300, width: '100%', backgroundColor: colors.surfaceVariant }}>
+          {meal.imageUri ? (
+            <Image
+              source={{ uri: meal.imageUri }}
+              style={styles.image}
+              resizeMode="cover"
+            />
+          ) : (
+            <View style={styles.placeholderContainer}>
+              <IconButton
+                icon="food-variant"
+                iconColor={colors.onSurfaceVariant}
+                size={64}
+              />
+            </View>
+          )}
         </View>
 
         <Surface style={styles.contentSurface}>
@@ -375,20 +360,6 @@ export default function FullMealView({ meal, onEdited, onDeleted }: Props) {
             </View>
           </ScrollView>
         </Surface>
-
-        <Portal>
-          <AddMealModal
-            visible={showEditModal}
-            onClose={() => setShowEditModal(false)}
-            onSave={handleSaveEdit}
-            initialMeal={{
-              name: meal.name,
-              ingredients: meal.ingredients,
-              notes: meal.notes,
-              imageUri: meal.imageUri,
-            }}
-          />
-        </Portal>
       </Surface>
     </SafeAreaView>
   );
@@ -416,14 +387,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     marginRight: 8,
   },
-  imageContainer: {
-    height: 300,
-    width: '100%',
-    backgroundColor: '#000',
-  },
   image: {
     width: '100%',
     height: '100%',
+  },
+  placeholderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   contentSurface: {
     flex: 1,

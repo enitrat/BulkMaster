@@ -106,8 +106,8 @@ export default function HistoryTab({ workouts, exercises, historyView, setHistor
   const theme = useTheme();
   const initialDate = useInitialDate();
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [selectedDateMeals, setSelectedDateMeals] = useState<MealEntry[]>([]);
-  const [selectedDateWorkouts, setSelectedDateWorkouts] = useState<Workout[]>([]);
+  const [selectedDateMeals, setSelectedDateMeals] = useState<MealEntry[] | null>(null);
+  const [selectedDateWorkouts, setSelectedDateWorkouts] = useState<Workout[] | null>(null);
   const [isCalendarVisible, setIsCalendarVisible] = useState(false);
 
   // Update selectedDate when initialDate is loaded
