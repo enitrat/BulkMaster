@@ -4,6 +4,7 @@ import { Card, Text, IconButton, useTheme } from "react-native-paper";
 import { MealEntry, Ingredient, Macros } from "../../types/index";
 import { format } from "date-fns";
 import { router } from "expo-router";
+import { haptics } from "@/utils/haptics";
 
 interface Props {
   meal: MealEntry;
@@ -66,7 +67,8 @@ export default function MealCard({ meal, onDeleted, onEdited }: Props) {
     };
   }, {} as Macros);
 
-  const handlePress = () => {
+  const handlePress = async () => {
+    haptics.light();
     router.push({
       pathname: "/meal/[id]",
       params: { id: meal.id },

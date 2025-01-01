@@ -10,6 +10,7 @@ import ManualMealInput from "../Nutrition/ManualMealInput";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LoadingView } from "@/components/common/LoadingView";
 import { ErrorView } from "@/components/common/ErrorView";
+import { haptics } from "@/utils/haptics";
 
 export default function NutritionTab() {
   const theme = useTheme();
@@ -37,12 +38,14 @@ export default function NutritionTab() {
         ...mealData,
         date: new Date(),
       }),
-    onSuccess: () => {
+    onSuccess: async () => {
+      haptics.success();
       queryClient.invalidateQueries({
         queryKey: ["meals", today.toDateString()],
       });
     },
-    onError: (error) => {
+    onError: async (error) => {
+      haptics.error();
       console.error("Error saving meal:", error);
       Alert.alert("Error", "Failed to save meal");
     },
@@ -50,6 +53,23 @@ export default function NutritionTab() {
 
   const handleAddMeal = async (mealData: Omit<MealEntry, "id" | "date">) => {
     addMealMutation.mutate(mealData);
+  };
+
+  const handleFABPress = async () => {
+    haptics.medium();
+    setIsExpanded(!isExpanded);
+  };
+
+  const handleCameraPress = async () => {
+    haptics.light();
+    setIsExpanded(false);
+    setShowCamera(true);
+  };
+
+  const handleManualPress = async () => {
+    haptics.light();
+    setIsExpanded(false);
+    setShowManualInput(true);
   };
 
   if (isLoading) {
@@ -87,10 +107,7 @@ export default function NutritionTab() {
             <FAB
               icon="camera"
               label="Take Photo"
-              onPress={() => {
-                setIsExpanded(false);
-                setShowCamera(true);
-              }}
+              onPress={handleCameraPress}
               style={[
                 styles.fab,
                 { backgroundColor: theme.colors.primaryContainer },
@@ -99,10 +116,7 @@ export default function NutritionTab() {
             <FAB
               icon="pencil"
               label="Manual Input"
-              onPress={() => {
-                setIsExpanded(false);
-                setShowManualInput(true);
-              }}
+              onPress={handleManualPress}
               style={[
                 styles.fab,
                 { backgroundColor: theme.colors.primaryContainer },
@@ -114,7 +128,7 @@ export default function NutritionTab() {
           icon={isExpanded ? "close" : "plus"}
           label={isExpanded ? "Close" : "Add Meal"}
           style={[styles.fab]}
-          onPress={() => setIsExpanded(!isExpanded)}
+          onPress={handleFABPress}
           customSize={56}
         />
       </View>

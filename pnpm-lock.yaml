@@ -17,6 +17,9 @@ dependencies:
   '@react-navigation/native':
     specifier: ^7.0.14
     version: 7.0.14(react-native@0.76.5)(react@18.3.1)
+  '@shopify/flash-list':
+    specifier: ^1.7.2
+    version: 1.7.2(@babel/runtime@7.26.0)(react-native@0.76.5)(react@18.3.1)
   '@shopify/react-native-skia':
     specifier: 1.5.0
     version: 1.5.0(react-native-reanimated@3.16.6)(react-native@0.76.5)(react@18.3.1)
@@ -2544,6 +2547,20 @@ packages:
     dependencies:
       component-type: 1.2.2
       join-component: 1.1.0
+
+  /@shopify/flash-list@1.7.2(@babel/runtime@7.26.0)(react-native@0.76.5)(react@18.3.1):
+    resolution: {integrity: sha512-rnadpDht/mlJLDM02HBni49EJJQhc51zjJ3diGnTz3MV6U8vK9Hztou+2C5d6bNLb4oZvSG5f7NTWejkipyMLw==}
+    peerDependencies:
+      '@babel/runtime': '*'
+      react: '*'
+      react-native: '*'
+    dependencies:
+      '@babel/runtime': 7.26.0
+      react: 18.3.1
+      react-native: 0.76.5(@babel/core@7.26.0)(@babel/preset-env@7.26.0)(@types/react@18.3.18)(react@18.3.1)
+      recyclerlistview: 4.2.1(react-native@0.76.5)(react@18.3.1)
+      tslib: 2.6.3
+    dev: false
 
   /@shopify/react-native-skia@1.5.0(react-native-reanimated@3.16.6)(react-native@0.76.5)(react@18.3.1):
     resolution: {integrity: sha512-YNcw7cbksiMJ3d8uxh14LFRztUhjQFphFV/GCm8cSO4SxFc4niqnvsGklXNv68DLESMdn5hQnfYpa0oJqaW20w==}
@@ -8115,6 +8132,10 @@ packages:
 
   /ts-object-utils@0.0.5:
     resolution: {integrity: sha512-iV0GvHqOmilbIKJsfyfJY9/dNHCs969z3so90dQWsO1eMMozvTpnB1MEaUbb3FYtZTGjv5sIy/xmslEz0Rg2TA==}
+    dev: false
+
+  /tslib@2.6.3:
+    resolution: {integrity: sha512-xNvxJEOUiWPGhUuUdQgAJPKOOJfGnIyKySOc09XkKsgdUV/3E2zvwZYdejjmRgPCgcym1juLH3226yA7sEFJKQ==}
     dev: false
 
   /tslib@2.8.1:

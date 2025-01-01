@@ -9,6 +9,7 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { BOTTOM_NAV_HEIGHT } from "@/types";
+import { haptics } from "@/utils/haptics";
 
 export const unstable_settings = {
   initialRouteName: "today",
@@ -88,6 +89,7 @@ export default function TabLayout() {
           <BottomNavigation
             navigationState={{ index, routes }}
             onIndexChange={(index) => {
+              haptics.light();
               setIndex(index);
               router.push(`/(tabs)/${routes[index].key}` as any);
             }}

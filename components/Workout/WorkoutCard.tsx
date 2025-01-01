@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useCallback } from "react";
 import { View, StyleSheet, Alert } from "react-native";
 import { Card, Text, IconButton, useTheme, List } from "react-native-paper";
 import { Workout, WorkoutExercise } from "../../types/index";
 import { workoutService } from "@/services/workoutService";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { haptics } from "@/utils/haptics";
 
 interface Props {
   workout: Workout;
@@ -28,17 +29,20 @@ export default function WorkoutCard({
 
   const deleteWorkoutMutation = useMutation({
     mutationFn: (workoutId: string) => workoutService.deleteWorkout(workoutId),
-    onSuccess: () => {
+    onSuccess: async () => {
+      haptics.success();
       queryClient.invalidateQueries({ queryKey: ["workouts"] });
       onDeleted?.();
     },
-    onError: (error) => {
+    onError: async (error) => {
+      haptics.error();
       console.error("Error deleting workout:", error);
       Alert.alert("Error", "Failed to delete workout");
     },
   });
 
-  const handleDelete = () => {
+  const handleDelete = useCallback(async () => {
+    haptics.warning();
     Alert.alert(
       "Delete Workout",
       "Are you sure you want to delete this workout? This action cannot be undone.",
@@ -51,7 +55,17 @@ export default function WorkoutCard({
         },
       ],
     );
-  };
+  }, [workout.id, deleteWorkoutMutation]);
+
+  const handleExpand = useCallback(async () => {
+    haptics.selection();
+    setIsExpanded(!isExpanded);
+  }, [isExpanded]);
+
+  const handlePress = useCallback(async () => {
+    haptics.light();
+    onPress?.();
+  }, [onPress]);
 
   const CardContent = () => (
     <>
@@ -75,7 +89,7 @@ export default function WorkoutCard({
             <IconButton
               {...props}
               icon={isExpanded ? "chevron-up" : "chevron-down"}
-              onPress={() => setIsExpanded(!isExpanded)}
+              onPress={handleExpand}
             />
           </View>
         )}
@@ -100,7 +114,7 @@ export default function WorkoutCard({
 
   const cardProps = {
     style: styles.card,
-    onPress: onPress,
+    onPress: onPress ? handlePress : undefined,
     mode: "elevated" as const,
   };
 

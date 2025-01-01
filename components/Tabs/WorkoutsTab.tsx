@@ -15,6 +15,7 @@ import { WorkoutTemplate, Workout, FAB_BOTTOM } from "@/types/index";
 import { templateService } from "@/services/templateService";
 import { workoutService } from "@/services/workoutService";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { haptics } from "@/utils/haptics";
 
 interface Props {
   templates: WorkoutTemplate[] | null;
@@ -30,7 +31,8 @@ export default function WorkoutsTab({
   const theme = useTheme();
   const insets = useSafeAreaInsets();
 
-  const handleCancelWorkout = () => {
+  const handleCancelWorkout = async () => {
+    haptics.warning();
     Alert.alert(
       "Cancel Workout",
       "Are you sure you want to cancel this workout? This action cannot be undone.",
@@ -40,15 +42,23 @@ export default function WorkoutsTab({
           text: "Yes, Cancel",
           style: "destructive",
           onPress: async () => {
-            await workoutService.deleteActiveWorkout();
-            onDataChange();
+            try {
+              await workoutService.deleteActiveWorkout();
+              haptics.success();
+              onDataChange();
+            } catch (error) {
+              haptics.error();
+              console.error(error);
+              Alert.alert("Error", "Failed to cancel workout");
+            }
           },
         },
       ],
     );
   };
 
-  const handleDeleteTemplate = (template: WorkoutTemplate) => {
+  const handleDeleteTemplate = async (template: WorkoutTemplate) => {
+    haptics.warning();
     Alert.alert(
       "Delete Template",
       "Are you sure you want to delete this template? This action cannot be undone.",
@@ -58,24 +68,49 @@ export default function WorkoutsTab({
           text: "Delete",
           style: "destructive",
           onPress: async () => {
-            await templateService.deleteTemplate(template.id);
-            onDataChange();
+            try {
+              await templateService.deleteTemplate(template.id);
+              haptics.success();
+              onDataChange();
+            } catch (error) {
+              haptics.error();
+              console.error(error);
+              Alert.alert("Error", "Failed to delete template");
+            }
           },
         },
       ],
     );
   };
 
+  const handleTemplatePress = async (template: WorkoutTemplate) => {
+    haptics.light();
+    router.push({
+      pathname: "/new-template",
+      params: { templateId: template.id },
+    });
+  };
+
+  const handleNewWorkout = async () => {
+    haptics.medium();
+    router.push("/new-workout");
+  };
+
+  const handleContinueWorkout = async () => {
+    haptics.light();
+    router.push("/workout-in-progress");
+  };
+
+  const handleNewTemplate = async () => {
+    haptics.light();
+    router.push("/new-template");
+  };
+
   const renderTemplate = (template: WorkoutTemplate) => (
     <Card
       mode="outlined"
       style={{ marginBottom: 12 }}
-      onPress={() => {
-        router.push({
-          pathname: "/new-template",
-          params: { templateId: template.id },
-        });
-      }}
+      onPress={() => handleTemplatePress(template)}
     >
       <Card.Title
         title={template.name}
@@ -105,7 +140,7 @@ export default function WorkoutsTab({
             <Card.Actions style={{ justifyContent: "flex-end", gap: 8 }}>
               <Button
                 mode="contained"
-                onPress={() => router.push("/workout-in-progress")}
+                onPress={handleContinueWorkout}
                 style={{ flex: 2 }}
               >
                 Continue Workout
@@ -151,7 +186,7 @@ export default function WorkoutsTab({
         <Button
           mode="outlined"
           icon="plus"
-          onPress={() => router.push("/new-template")}
+          onPress={handleNewTemplate}
           style={{ marginTop: 16 }}
         >
           Create New Template
@@ -167,7 +202,7 @@ export default function WorkoutsTab({
           right: 0,
           bottom: FAB_BOTTOM,
         }}
-        onPress={() => router.push("/new-workout")}
+        onPress={handleNewWorkout}
       />
     </Surface>
   );

@@ -9,6 +9,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ErrorBoundary } from "react-error-boundary";
 import { ErrorView } from "@/components/common/ErrorView";
+import { haptics } from "@/utils/haptics";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -48,7 +49,17 @@ export default function RootLayout() {
         <SafeAreaProvider>
           <StatusBar style={colors.background === "light" ? "light" : "dark"} />
           <PaperProvider theme={DefaultTheme}>
-            <Stack screenOptions={{ headerShown: false }}>
+            <Stack
+              screenOptions={{
+                headerShown: false,
+                animation: "slide_from_right",
+              }}
+              screenListeners={{
+                tabPress: () => {
+                  haptics.selection();
+                },
+              }}
+            >
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
               <Stack.Screen name="meal/[id]" options={{ headerShown: false }} />
               <Stack.Screen
