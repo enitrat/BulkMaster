@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
-import { router, useLocalSearchParams } from 'expo-router';
+import { View, Alert, ScrollView } from 'react-native';
+import { router, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import {
   Surface,
   Text,
@@ -23,8 +23,6 @@ import { workoutService } from '../services/workoutService';
 import { templateService } from '../services/templateService';
 import { exerciseService } from '../services/exerciseService';
 import RestTimer from '@/components/Workout/RestTimer';
-import { useFocusEffect } from '@react-navigation/native';
-import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 type SetModalProps = {
@@ -123,7 +121,7 @@ const SetModal: React.FC<SetModalProps> = ({
   );
 };
 
-export default function WorkoutInProgressScreen() {
+export default function WorkoutInProgress() {
   const theme = useTheme();
   const { templateId } = useLocalSearchParams<{ templateId?: string }>();
   const [workout, setWorkout] = useState<Workout | null>(null);
@@ -271,10 +269,12 @@ export default function WorkoutInProgressScreen() {
   if (showExerciseList) {
     return (
       <Surface style={{ flex: 1 }}>
-        <Appbar.Header>
-          <Appbar.Content title="Add Exercise" />
-          <Appbar.Action icon="close" onPress={() => setShowExerciseList(false)} />
-        </Appbar.Header>
+        <SafeAreaView edges={['top']}>
+          <Appbar.Header>
+            <Appbar.Content title="Add Exercise" />
+            <Appbar.Action icon="close" onPress={() => setShowExerciseList(false)} />
+          </Appbar.Header>
+        </SafeAreaView>
 
         <ScrollView>
           {availableExercises.map(exercise => (
@@ -291,16 +291,17 @@ export default function WorkoutInProgressScreen() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1 }} edges={['left', 'right']}>
-      <StatusBar style={theme.colors.background === 'dark' ? 'light' : 'dark'} />
     <Surface style={{ flex: 1 }}>
-      <Appbar.Header>
-        <Appbar.Content title="Workout in Progress" />
-        <Appbar.Action
-          icon="timer-outline"
-          onPress={() => setShowRestTimer(!showRestTimer)}
-        />
-      </Appbar.Header>
+      <SafeAreaView edges={['top']}>
+        <Appbar.Header>
+          <Appbar.BackAction onPress={() => router.back()} />
+          <Appbar.Content title="Workout in Progress" />
+          <Appbar.Action
+            icon="timer-outline"
+            onPress={() => setShowRestTimer(!showRestTimer)}
+          />
+        </Appbar.Header>
+      </SafeAreaView>
 
       {showRestTimer ? (
         <RestTimer onComplete={() => setShowRestTimer(false)} />
@@ -340,6 +341,5 @@ export default function WorkoutInProgressScreen() {
         title="Edit Exercise"
       />
     </Surface>
-    </SafeAreaView>
   );
 }

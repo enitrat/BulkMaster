@@ -1,15 +1,17 @@
 import React, { useState, useCallback } from 'react';
 import { View, FlatList, Alert, StyleSheet } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, router } from 'expo-router';
 import { Surface, FAB, Text, useTheme } from 'react-native-paper';
-import { MealEntry } from '../../types/index';
+import { BOTTOM_NAV_HEIGHT, FAB_BOTTOM, MealEntry } from '../../types/index';
 import { nutritionService } from '../../services/nutritionService';
 import MealCard from '../Nutrition/MealCard';
 import FoodImageCapture from '../Nutrition/FoodImageCapture';
 import ManualMealInput from '../Nutrition/ManualMealInput';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function NutritionTab() {
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
   const [meals, setMeals] = useState<MealEntry[] | null>(null);
   const [showManualInput, setShowManualInput] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
@@ -40,6 +42,7 @@ export default function NutritionTab() {
     }
   };
 
+
   const renderMeal = ({ item }: { item: MealEntry }) => (
     <MealCard
       meal={item}
@@ -50,24 +53,27 @@ export default function NutritionTab() {
 
   return (
     <Surface style={styles.container}>
-      {meals &&
-      <FlatList
-        data={meals}
-        renderItem={renderMeal}
-        keyExtractor={item => item.id}
-        contentContainerStyle={styles.listContent}
-        ListEmptyComponent={
-          <Text
-            variant="bodyLarge"
-            style={styles.emptyText}
-          >
-            No meals recorded today
-          </Text>
-        }
-      />
-    }
+      {meals && (
+        <FlatList
+          data={meals}
+          renderItem={renderMeal}
+          keyExtractor={item => item.id}
+          contentContainerStyle={[
+            styles.listContent,
+            { paddingBottom: BOTTOM_NAV_HEIGHT + insets.bottom + 80 }
+          ]}
+          ListEmptyComponent={
+            <Text variant="bodyLarge" style={styles.emptyText}>
+              No meals recorded today
+            </Text>
+          }
+        />
+      )}
 
-      <View style={styles.fabContainer}>
+      <View style={[
+        styles.fabContainer,
+        { bottom: FAB_BOTTOM }
+      ]}>
         {isExpanded && (
           <>
             <FAB
@@ -130,7 +136,6 @@ const styles = StyleSheet.create({
   },
   listContent: {
     padding: 16,
-    paddingBottom: 80,
   },
   emptyText: {
     textAlign: 'center',
@@ -140,7 +145,6 @@ const styles = StyleSheet.create({
   fabContainer: {
     position: 'absolute',
     right: 16,
-    bottom: 16,
     alignItems: 'flex-end',
     gap: 16,
   },

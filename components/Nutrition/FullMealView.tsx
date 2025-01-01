@@ -10,8 +10,8 @@ import { nutritionService } from '@/services/nutritionService';
 
 interface Props {
   meal: MealEntry;
-  onEdited?: () => void;
-  onDeleted?: () => void;
+  onEdited: () => void;
+  onDeleted: () => void;
 }
 
 interface IngredientItemProps {
@@ -212,6 +212,10 @@ export default function FullMealView({ meal, onEdited, onDeleted }: Props) {
     }
   };
 
+  const handleBack = () => {
+    router.back();
+  };
+
   return (
     <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
       <StatusBar style="light" />
@@ -221,7 +225,7 @@ export default function FullMealView({ meal, onEdited, onDeleted }: Props) {
             icon="arrow-left"
             iconColor="white"
             size={24}
-            onPress={() => router.back()}
+            onPress={handleBack}
             style={styles.backButton}
           />
           <View style={styles.headerActions}>

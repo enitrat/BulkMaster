@@ -57,8 +57,12 @@ export default function MealCard({ meal, onDeleted, onEdited }: Props) {
     };
   }, {} as Macros);
 
+
   const handlePress = () => {
-    router.push(`/meal/${meal.id}`);
+    router.push({
+      pathname: '/meal/[id]',
+      params: { id: meal.id }
+    });
   };
 
   return (

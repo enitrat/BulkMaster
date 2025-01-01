@@ -2,9 +2,10 @@ import React from 'react';
 import { Alert } from 'react-native';
 import { router } from 'expo-router';
 import { Surface, Card, Text, Button, IconButton, List, useTheme, FAB } from 'react-native-paper';
-import { WorkoutTemplate, Workout } from '@/types/index';
+import { WorkoutTemplate, Workout, FAB_BOTTOM } from '@/types/index';
 import { templateService } from '@/services/templateService';
 import { workoutService } from '@/services/workoutService';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface Props {
   templates: WorkoutTemplate[] | null;
@@ -14,6 +15,7 @@ interface Props {
 
 export default function WorkoutsTab({ templates, activeWorkout, onDataChange }: Props) {
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
 
   const handleCancelWorkout = () => {
     Alert.alert(
@@ -145,9 +147,9 @@ export default function WorkoutsTab({ templates, activeWorkout, onDataChange }: 
         label="New Workout"
         style={{
           position: 'absolute',
-          margin: 16,
+          marginRight: 16,
           right: 0,
-          bottom: 0,
+          bottom: FAB_BOTTOM,
         }}
         onPress={() => router.push('/new-workout')}
       />

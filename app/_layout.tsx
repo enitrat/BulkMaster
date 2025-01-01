@@ -1,22 +1,21 @@
-import { DarkTheme as NavigationDarkTheme, DefaultTheme as NavigationDefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
+import { useColorScheme } from 'react-native';
+import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useColorScheme } from 'react-native';
 import { useEffect } from 'react';
-import { DefaultTheme, PaperProvider } from 'react-native-paper';
+import { DefaultTheme, PaperProvider, useTheme } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
 export const unstable_settings = {
-  initialRouteName: 'index',
+  initialRouteName: '(tabs)',
 };
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
+  const { colors } = useTheme();
   const [loaded] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
@@ -33,15 +32,14 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
+      <StatusBar style={colors.background === 'light' ? 'light' : 'dark'} />
       <PaperProvider theme={DefaultTheme}>
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            contentStyle: {
-              backgroundColor: DefaultTheme.colors.background,
-            },
-          }}
-        >
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="meal/[id]" options={{ headerShown: false }} />
+          <Stack.Screen name="workout-in-progress" options={{ headerShown: false }} />
+          <Stack.Screen name="new-template" options={{ headerShown: false }} />
+          <Stack.Screen name="new-workout" options={{ headerShown: false }} />
         </Stack>
       </PaperProvider>
     </SafeAreaProvider>

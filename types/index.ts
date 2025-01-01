@@ -69,3 +69,6 @@ export interface MealEntry {
 }
 
 export type HistoryView = 'calendar' | 'exercises' | 'nutrition';
+
+export const BOTTOM_NAV_HEIGHT = 80;
+export const FAB_BOTTOM = 16;
